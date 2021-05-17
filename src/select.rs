@@ -1,4 +1,4 @@
-use crate::{Join, Sql, Table, ToSql};
+use crate::{field::Predicate, Join, Sql, Table, ToSql};
 use std::marker::PhantomData;
 
 pub struct WildCard;
@@ -27,21 +27,51 @@ pub trait Select: Join {
 
 impl<J: Join> Select for J {}
 
-pub struct SelectStatement<F, Q> {
-    from: PhantomData<F>,
+pub struct SelectStatement<S, Q> {
+    from: PhantomData<S>,
     query: PhantomData<Q>,
 }
 
-impl<F, Q> ToSql for SelectStatement<F, Q>
+impl<S: Select, Q> SelectStatement<S, Q> {
+    pub fn filter<F, P>(self, f: F) -> Filter<S, Q, P>
+    where
+        F: FnOnce(S::Fields) -> P,
+    {
+        Filter {
+            select: self,
+            predicate: f(Default::default()),
+        }
+    }
+}
+
+impl<S, Q> ToSql for SelectStatement<S, Q>
 where
-    F: Select,
+    S: Select,
     Q: Query,
 {
     fn write_sql(&self, sql: &mut Sql) {
         sql.buf.push_str("SELECT ");
         Q::write_query(&mut sql.buf);
         sql.buf.push_str(" FROM ");
-        sql.buf.push_str(F::Table::NAME);
-        F::write_join(sql);
+        sql.buf.push_str(S::Table::NAME);
+        S::write_join(sql);
+    }
+}
+
+pub struct Filter<S, Q, P> {
+    select: SelectStatement<S, Q>,
+    predicate: P,
+}
+
+impl<S, Q, P> ToSql for Filter<S, Q, P>
+where
+    S: Select,
+    Q: Query,
+    P: Predicate,
+{
+    fn write_sql(&self, sql: &mut Sql) {
+        self.select.write_sql(sql);
+        sql.buf.push_str(" WHERE ");
+        self.predicate.write_predicate(&mut sql.buf);
     }
 }

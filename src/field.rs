@@ -1,4 +1,4 @@
-use crate::Table;
+use crate::{bind::Bind, Table};
 use std::fmt::{Display, Write};
 use std::marker::PhantomData;
 
@@ -65,5 +65,16 @@ where
         self.lhs.write_field(sql);
         sql.push('=');
         self.rhs.write_field(sql);
+    }
+}
+
+impl<T, A> Predicate for Eq<T, A, Bind>
+where
+    T: Table,
+{
+    fn write_predicate(&self, sql: &mut String) {
+        self.lhs.write_field(sql);
+        sql.push('=');
+        sql.write_fmt(format_args!("${}", self.rhs.n)).unwrap();
     }
 }

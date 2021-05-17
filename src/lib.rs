@@ -121,7 +121,9 @@ mod tests {
         dbg!(User::select().to_sql().buf);
         dbg!(UserPost::select().to_sql().buf);
 
-        let stmt = User::prepare("idplan", |binds| User::select());
+        let stmt = User::prepare("idplan", |binds| {
+            User::select().filter(|user| user.id.eq(binds.id))
+        });
         dbg!(stmt.to_sql().buf);
         dbg!(stmt.execute(User { id: 0 }).to_sql().buf);
     }
