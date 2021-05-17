@@ -2,6 +2,35 @@ use crate::Table;
 use std::fmt::{Display, Write};
 use std::marker::PhantomData;
 
+pub struct Field<T, A> {
+    name: &'static str,
+    _table: PhantomData<T>,
+    _type: PhantomData<A>,
+}
+
+impl<T, A> Field<T, A>
+where
+    T: Table,
+{
+    pub fn new(name: &'static str) -> Self {
+        Self {
+            name,
+            _table: PhantomData,
+            _type: PhantomData,
+        }
+    }
+
+    pub fn eq<U>(self, rhs: U) -> Eq<T, A, U> {
+        Eq { lhs: self, rhs }
+    }
+
+    fn write_field(&self, sql: &mut String) {
+        sql.push_str(T::NAME);
+        sql.push('.');
+        sql.push_str(self.name);
+    }
+}
+
 pub struct Eq<T, A, U> {
     lhs: Field<T, A>,
     rhs: U,
@@ -36,34 +65,5 @@ where
         self.lhs.write_field(sql);
         sql.push('=');
         self.rhs.write_field(sql);
-    }
-}
-
-pub struct Field<T, A> {
-    name: &'static str,
-    _table: PhantomData<T>,
-    _type: PhantomData<A>,
-}
-
-impl<T, A> Field<T, A>
-where
-    T: Table,
-{
-    pub fn new(name: &'static str) -> Self {
-        Self {
-            name,
-            _table: PhantomData,
-            _type: PhantomData,
-        }
-    }
-
-    pub fn eq<U>(self, rhs: U) -> Eq<T, A, U> {
-        Eq { lhs: self, rhs }
-    }
-
-    fn write_field(&self, sql: &mut String) {
-        sql.push_str(T::NAME);
-        sql.push('.');
-        sql.push_str(self.name);
     }
 }

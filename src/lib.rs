@@ -1,5 +1,8 @@
 #![feature(min_type_alias_impl_trait)]
 
+pub mod bind;
+pub use bind::Binding;
+
 pub mod field;
 
 pub mod join;
@@ -19,11 +22,16 @@ pub trait Table {
 
 #[cfg(test)]
 mod tests {
+    use std::fmt::Write;
+
+    use super::bind::{Bind, Binder};
     use super::field::*;
     use super::join::*;
     use super::*;
 
-    struct User {}
+    struct User {
+        id: i64,
+    }
 
     struct UserFields {
         id: Field<User, i64>,
@@ -88,9 +96,33 @@ mod tests {
         post: PostFields,
     }
 
+    struct UserBindings {
+        id: Bind,
+    }
+
+    impl Binding for User {
+        type Bindings = UserBindings;
+
+        fn write_types(sql: &mut Sql) {
+            sql.buf.push_str("int");
+        }
+
+        fn write_values(&self, sql: &mut Sql) {
+            sql.buf.write_fmt(format_args!("{}", self.id)).unwrap();
+        }
+
+        fn bindings(binder: &mut Binder) -> Self::Bindings {
+            UserBindings { id: binder.bind() }
+        }
+    }
+
     #[test]
     fn it_works() {
         dbg!(User::select().to_sql().buf);
         dbg!(UserPost::select().to_sql().buf);
+
+        let stmt = User::prepare("idplan", |binds| User::select());
+        dbg!(stmt.to_sql().buf);
+        dbg!(stmt.execute(User { id: 0 }).to_sql().buf);
     }
 }

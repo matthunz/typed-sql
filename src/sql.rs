@@ -23,6 +23,7 @@ pub trait ToSql {
     fn to_sql(&self) -> Sql {
         let mut sql = Sql { buf: String::new() };
         self.write_sql(&mut sql);
+        sql.buf.push(';');
         sql
     }
 }
