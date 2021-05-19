@@ -1,4 +1,4 @@
-use crate::{bind::Bind, Table};
+use crate::{bind::Bind, Sql, Table};
 use std::fmt::{Display, Write};
 use std::marker::PhantomData;
 
@@ -22,6 +22,13 @@ where
 
     pub fn eq<U>(self, rhs: U) -> Eq<T, A, U> {
         Eq { lhs: self, rhs }
+    }
+
+    pub fn then<T2, A2>(self, next: Field<T2, A2>) -> Then<T, A, Field<T2, A2>> {
+        Then {
+            head: self,
+            tail: next,
+        }
     }
 
     fn write_field(&self, sql: &mut String) {
@@ -76,5 +83,35 @@ where
         self.lhs.write_field(sql);
         sql.push('=');
         sql.write_fmt(format_args!("${}", self.rhs.n)).unwrap();
+    }
+}
+
+pub struct Then<T, A, O> {
+    head: Field<T, A>,
+    tail: O,
+}
+
+pub trait Order {
+    fn write_columns(&self, sql: &mut Sql);
+}
+
+impl<T, A, O> Order for Then<T, A, O>
+where
+    T: Table,
+    O: Order,
+{
+    fn write_columns(&self, sql: &mut Sql) {
+        self.head.write_field(&mut sql.buf);
+        sql.buf.push(',');
+        self.tail.write_columns(sql);
+    }
+}
+
+impl<T, A> Order for Field<T, A>
+where
+    T: Table,
+{
+    fn write_columns(&self, sql: &mut Sql) {
+        self.write_field(&mut sql.buf);
     }
 }

@@ -12,7 +12,7 @@ pub mod join;
 pub use join::Join;
 
 pub mod select;
-pub use select::Select;
+pub use select::{QueryDsl, Select};
 
 mod sql;
 pub use sql::{Sql, ToSql};
@@ -36,6 +36,7 @@ mod tests {
 
     struct User {
         id: i64,
+        name: String
     }
 
     impl Insertable for User {
@@ -50,12 +51,14 @@ mod tests {
 
     struct UserFields {
         id: Field<User, i64>,
+        name: Field<User, String>
     }
 
     impl Default for UserFields {
         fn default() -> Self {
             Self {
                 id: Field::new("id"),
+                name: Field::new("name")
             }
         }
     }
@@ -137,11 +140,11 @@ mod tests {
         dbg!(UserPost::select().to_sql().buf);
 
         let stmt = User::prepare("idplan", |binds| {
-            User::select().filter(|user| user.id.eq(binds.id))
+            User::select()
+                .filter(|user| user.id.eq(binds.id))
+                .group_by(|user| user.id.then(user.name))
         });
         dbg!(stmt.to_sql().buf);
-        dbg!(stmt.execute(User { id: 0 }).to_sql().buf);
 
-        dbg!(User::insert(&[User { id: 0 }]).to_sql().buf);
     }
 }

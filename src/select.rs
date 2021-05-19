@@ -1,4 +1,5 @@
-use crate::{field::Predicate, Join, Sql, Table, ToSql};
+use crate::field::Predicate;
+use crate::{field::Order, Join, Sql, Table, ToSql};
 use std::marker::PhantomData;
 
 pub struct WildCard;
@@ -74,4 +75,62 @@ where
         sql.buf.push_str(" WHERE ");
         self.predicate.write_predicate(&mut sql.buf);
     }
+}
+
+pub trait QueryDsl: ToSql {
+    type Select: Select;
+
+    fn group_by<F, O>(self, f: F) -> GroupBy<Self, O>
+    where
+        Self: Sized,
+        F: FnOnce(<Self::Select as Join>::Fields) -> O,
+        O: Order,
+    {
+        GroupBy {
+            stmt: self,
+            order: f(Default::default()),
+        }
+    }
+}
+
+impl<S, Q> QueryDsl for SelectStatement<S, Q>
+where
+    S: Select,
+    Q: Queryable,
+{
+    type Select = S;
+}
+
+impl<S, Q, P> QueryDsl for Filter<S, Q, P>
+where
+    S: Select,
+    Q: Queryable,
+    P: Predicate,
+{
+    type Select = S;
+}
+
+pub struct GroupBy<Q, O> {
+    stmt: Q,
+    order: O,
+}
+
+impl<Q, O> ToSql for GroupBy<Q, O>
+where
+    Q: QueryDsl,
+    O: Order,
+{
+    fn write_sql(&self, sql: &mut Sql) {
+        self.stmt.write_sql(sql);
+        sql.buf.push_str(" GROUP BY ");
+        self.order.write_columns(sql);
+    }
+}
+
+impl<Q, O> QueryDsl for GroupBy<Q, O>
+where
+    Q: QueryDsl,
+    O: Order,
+{
+    type Select = Q::Select;
 }
