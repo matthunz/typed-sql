@@ -3,11 +3,11 @@ use std::marker::PhantomData;
 
 pub struct WildCard;
 
-pub trait Query {
+pub trait Queryable {
     fn write_query(sql: &mut String);
 }
 
-impl Query for WildCard {
+impl Queryable for WildCard {
     fn write_query(sql: &mut String) {
         sql.push('*');
     }
@@ -47,7 +47,7 @@ impl<S: Select, Q> SelectStatement<S, Q> {
 impl<S, Q> ToSql for SelectStatement<S, Q>
 where
     S: Select,
-    Q: Query,
+    Q: Queryable,
 {
     fn write_sql(&self, sql: &mut Sql) {
         sql.buf.push_str("SELECT ");
@@ -66,7 +66,7 @@ pub struct Filter<S, Q, P> {
 impl<S, Q, P> ToSql for Filter<S, Q, P>
 where
     S: Select,
-    Q: Query,
+    Q: Queryable,
     P: Predicate,
 {
     fn write_sql(&self, sql: &mut Sql) {

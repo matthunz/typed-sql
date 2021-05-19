@@ -5,6 +5,9 @@ pub use bind::Binding;
 
 pub mod field;
 
+pub mod insert;
+pub use insert::Insert;
+
 pub mod join;
 pub use join::Join;
 
@@ -24,6 +27,8 @@ pub trait Table {
 mod tests {
     use std::fmt::Write;
 
+    use crate::insert::Insertable;
+
     use super::bind::{Bind, Binder};
     use super::field::*;
     use super::join::*;
@@ -31,6 +36,16 @@ mod tests {
 
     struct User {
         id: i64,
+    }
+
+    impl Insertable for User {
+        fn write_columns(sql: &mut Sql) {
+            sql.buf.push_str("id");
+        }
+
+        fn write_values(&self, sql: &mut Sql) {
+            sql.buf.write_fmt(format_args!("{}", self.id)).unwrap();
+        }
     }
 
     struct UserFields {
@@ -126,5 +141,7 @@ mod tests {
         });
         dbg!(stmt.to_sql().buf);
         dbg!(stmt.execute(User { id: 0 }).to_sql().buf);
+
+        dbg!(User::insert(&[User { id: 0 }]).to_sql().buf);
     }
 }
