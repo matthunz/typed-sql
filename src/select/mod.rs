@@ -21,6 +21,17 @@ impl Queryable for WildCard {
 }
 
 pub trait Select: Join {
+    /// ```
+    /// use typed_sql::{Table, Select, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64
+    /// }
+    ///
+    /// let stmt = User::select();
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users;");
+    /// ```
     fn select() -> SelectStatement<Self, WildCard>
     where
         Self: Sized,
@@ -86,6 +97,33 @@ where
 pub trait QueryDsl: ToSql {
     type Select: Select;
 
+    /// # Examples
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql, QueryDsl};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64
+    /// }
+    ///
+    /// let stmt = User::select().group_by(|user| user.id);
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users GROUP BY users.id;");
+    /// ```
+    /// ## Multiple columns
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql, QueryDsl};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64,
+    ///     name: String
+    /// }
+    ///
+    /// let stmt = User::select().group_by(|user| user.id.then(user.name));
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users GROUP BY users.id,users.name;");
+    /// ```
     fn group_by<F, O>(self, f: F) -> GroupBy<Self, O>
     where
         Self: Sized,
@@ -95,6 +133,48 @@ pub trait QueryDsl: ToSql {
         GroupBy::new(self, f(Default::default()))
     }
 
+    /// # Examples
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql, QueryDsl};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64,
+    ///     name: String
+    /// }
+    ///
+    /// let stmt = User::select().order_by(|user| user.id);
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users ORDER BY users.id;");
+    /// ```
+    /// ## Direction
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql, QueryDsl};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64
+    /// }
+    ///
+    /// let stmt = User::select().order_by(|user| user.id.ascending());
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users ORDER BY users.id ASC;");
+    /// ```
+    /// ## Multiple columns
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql, QueryDsl};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64,
+    ///     name: String
+    /// }
+    ///
+    /// let stmt = User::select()
+    ///     .order_by(|user| user.id.ascending().then(user.name.descending()));
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users ORDER BY users.id ASC,users.name DESC;");
+    /// ```
     fn order_by<F, O>(self, f: F) -> OrderBy<Self, O>
     where
         Self: Sized,
