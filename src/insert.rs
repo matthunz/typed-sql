@@ -1,19 +1,18 @@
+use crate::{Table, ToSql};
 use std::marker::PhantomData;
 
-use crate::{Sql, Table, ToSql};
-
 pub trait Insertable {
-    fn write_columns(sql: &mut Sql);
+    fn write_columns(sql: &mut String);
 
-    fn write_values(&self, sql: &mut Sql);
+    fn write_values(&self, sql: &mut String);
 }
 
 impl<I: Insertable> Insertable for &I {
-    fn write_columns(sql: &mut Sql) {
+    fn write_columns(sql: &mut String) {
         I::write_columns(sql);
     }
 
-    fn write_values(&self, sql: &mut Sql) {
+    fn write_values(&self, sql: &mut String) {
         (*self).write_values(sql);
     }
 }
@@ -44,22 +43,22 @@ where
     V: IntoIterator + Clone,
     V::Item: Insertable,
 {
-    fn write_sql(&self, sql: &mut Sql) {
-        sql.buf.push_str("INSERT INTO ");
-        sql.buf.push_str(T::NAME);
-        sql.buf.push('(');
+    fn write_sql(&self, sql: &mut String) {
+        sql.push_str("INSERT INTO ");
+        sql.push_str(T::NAME);
+        sql.push('(');
         V::Item::write_columns(sql);
-        sql.buf.push(')');
-        sql.buf.push_str(" VALUES ");
+        sql.push(')');
+        sql.push_str(" VALUES ");
         let mut values = self.values.clone().into_iter().peekable();
         loop {
             if let Some(value) = values.next() {
-                sql.buf.push('(');
+                sql.push('(');
                 value.write_values(sql);
-                sql.buf.push(')');
+                sql.push(')');
 
                 if values.peek().is_some() {
-                    sql.buf.push(',');
+                    sql.push(',');
                     continue;
                 }
             }

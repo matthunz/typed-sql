@@ -1,5 +1,5 @@
 use crate::field::Predicate;
-use crate::{Sql, Table};
+use crate::Table;
 
 pub struct Inner;
 
@@ -18,7 +18,7 @@ pub trait Join {
 
     fn join(joined: Self::Fields) -> Self::Predicate;
 
-    fn write_join(sql: &mut Sql);
+    fn write_join(sql: &mut String);
 }
 
 impl<T: Table> Join for T {
@@ -28,5 +28,5 @@ impl<T: Table> Join for T {
 
     fn join(_joined: Self::Fields) -> Self::Predicate {}
 
-    fn write_join(_sql: &mut Sql) {}
+    fn write_join(_sql: &mut String) {}
 }

@@ -1,4 +1,6 @@
-use crate::{bind::Bind, Sql, Table};
+use crate::bind::Bind;
+use crate::select::order::{Ascending, Descending, Ordered};
+use crate::Table;
 use std::fmt::{Display, Write};
 use std::marker::PhantomData;
 
@@ -24,14 +26,22 @@ where
         Eq { lhs: self, rhs }
     }
 
-    pub fn then<T2, A2>(self, next: Field<T2, A2>) -> Then<T, A, Field<T2, A2>> {
+    pub fn then<T2>(self, next: T2) -> Then<Self, T2> {
         Then {
             head: self,
             tail: next,
         }
     }
 
-    fn write_field(&self, sql: &mut String) {
+    pub fn ascending(self) -> Ordered<T, A, Ascending> {
+        Ordered::new(self)
+    }
+
+    pub fn descending(self) -> Ordered<T, A, Descending> {
+        Ordered::new(self)
+    }
+
+    pub(crate) fn write_field(&self, sql: &mut String) {
         sql.push_str(T::NAME);
         sql.push('.');
         sql.push_str(self.name);
@@ -86,32 +96,16 @@ where
     }
 }
 
-pub struct Then<T, A, O> {
-    head: Field<T, A>,
-    tail: O,
+pub struct Then<H, T> {
+    pub(crate) head: H,
+    pub(crate) tail: T,
 }
 
-pub trait Order {
-    fn write_columns(&self, sql: &mut Sql);
-}
-
-impl<T, A, O> Order for Then<T, A, O>
-where
-    T: Table,
-    O: Order,
-{
-    fn write_columns(&self, sql: &mut Sql) {
-        self.head.write_field(&mut sql.buf);
-        sql.buf.push(',');
-        self.tail.write_columns(sql);
-    }
-}
-
-impl<T, A> Order for Field<T, A>
-where
-    T: Table,
-{
-    fn write_columns(&self, sql: &mut Sql) {
-        self.write_field(&mut sql.buf);
+impl<H, T> Then<H, T> {
+    pub fn then<T2>(self, next: T2) -> Then<Self, T2> {
+        Then {
+            head: self,
+            tail: next,
+        }
     }
 }

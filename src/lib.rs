@@ -15,7 +15,7 @@ pub mod select;
 pub use select::{QueryDsl, Select};
 
 mod sql;
-pub use sql::{Sql, ToSql};
+pub use sql::{ToSql, WriteSql};
 
 pub trait Table {
     const NAME: &'static str;
@@ -36,29 +36,31 @@ mod tests {
 
     struct User {
         id: i64,
-        name: String
+        name: String,
     }
 
     impl Insertable for User {
-        fn write_columns(sql: &mut Sql) {
-            sql.buf.push_str("id");
+        fn write_columns(sql: &mut String) {
+            sql.push_str("id");
         }
 
-        fn write_values(&self, sql: &mut Sql) {
-            sql.buf.write_fmt(format_args!("{}", self.id)).unwrap();
+        fn write_values(&self, sql: &mut String) {
+            sql.write_fmt(format_args!("{}", self.id)).unwrap();
         }
     }
 
     struct UserFields {
         id: Field<User, i64>,
-        name: Field<User, String>
+        name: Field<User, String>,
+        email: Field<User, String>,
     }
 
     impl Default for UserFields {
         fn default() -> Self {
             Self {
                 id: Field::new("id"),
-                name: Field::new("name")
+                name: Field::new("name"),
+                email: Field::new("email"),
             }
         }
     }
@@ -103,7 +105,7 @@ mod tests {
             joined.user.id.eq(joined.post.id)
         }
 
-        fn write_join(sql: &mut Sql) {
+        fn write_join(sql: &mut String) {
             sql.write_join::<Self, Inner, Post>()
         }
     }
@@ -121,12 +123,12 @@ mod tests {
     impl Binding for User {
         type Bindings = UserBindings;
 
-        fn write_types(sql: &mut Sql) {
-            sql.buf.push_str("int");
+        fn write_types(sql: &mut String) {
+            sql.push_str("int");
         }
 
-        fn write_values(&self, sql: &mut Sql) {
-            sql.buf.write_fmt(format_args!("{}", self.id)).unwrap();
+        fn write_values(&self, sql: &mut String) {
+            sql.write_fmt(format_args!("{}", self.id)).unwrap();
         }
 
         fn bindings(binder: &mut Binder) -> Self::Bindings {
@@ -136,15 +138,19 @@ mod tests {
 
     #[test]
     fn it_works() {
-        dbg!(User::select().to_sql().buf);
-        dbg!(UserPost::select().to_sql().buf);
+        dbg!(User::select().to_sql());
+        dbg!(UserPost::select().to_sql());
 
         let stmt = User::prepare("idplan", |binds| {
             User::select()
                 .filter(|user| user.id.eq(binds.id))
-                .group_by(|user| user.id.then(user.name))
+                .group_by(|user| user.id.then(user.name).then(user.email))
+                .order_by(|user| {
+                    user.id
+                        .then(user.name.ascending())
+                        .then(user.email.descending())
+                })
         });
-        dbg!(stmt.to_sql().buf);
-
+        dbg!(stmt.to_sql());
     }
 }

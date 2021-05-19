@@ -1,6 +1,5 @@
+use crate::ToSql;
 use std::marker::PhantomData;
-
-use crate::{Sql, ToSql};
 
 pub struct Bind {
     pub n: u8,
@@ -29,9 +28,9 @@ pub trait Binding {
 
     fn bindings(binder: &mut Binder) -> Self::Bindings;
 
-    fn write_types(sql: &mut Sql);
+    fn write_types(sql: &mut String);
 
-    fn write_values(&self, sql: &mut Sql);
+    fn write_values(&self, sql: &mut String);
 
     fn prepare<F, S>(name: &str, f: F) -> Prepare<Self, S>
     where
@@ -64,15 +63,15 @@ impl<B: Binding, S: ToSql> Prepare<'_, B, S> {
 }
 
 impl<B: Binding, S: ToSql> ToSql for Prepare<'_, B, S> {
-    fn write_sql(&self, sql: &mut Sql) {
-        sql.buf.push_str("PREPARE ");
-        sql.buf.push_str(self.name);
+    fn write_sql(&self, sql: &mut String) {
+        sql.push_str("PREPARE ");
+        sql.push_str(self.name);
 
-        sql.buf.push('(');
+        sql.push('(');
         B::write_types(sql);
-        sql.buf.push(')');
+        sql.push(')');
 
-        sql.buf.push_str(" AS ");
+        sql.push_str(" AS ");
         self.stmt.write_sql(sql);
     }
 }
@@ -83,11 +82,11 @@ pub struct Execute<'a, B> {
 }
 
 impl<B: Binding> ToSql for Execute<'_, B> {
-    fn write_sql(&self, sql: &mut Sql) {
-        sql.buf.push_str("EXECUTE ");
-        sql.buf.push_str(self.name);
-        sql.buf.push('(');
+    fn write_sql(&self, sql: &mut String) {
+        sql.push_str("EXECUTE ");
+        sql.push_str(self.name);
+        sql.push('(');
         self.binding.write_values(sql);
-        sql.buf.push(')');
+        sql.push(')');
     }
 }

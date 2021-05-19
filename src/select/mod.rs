@@ -1,6 +1,12 @@
 use crate::field::Predicate;
-use crate::{field::Order, Join, Sql, Table, ToSql};
+use crate::{Join, Table, ToSql};
 use std::marker::PhantomData;
+
+pub mod group;
+use group::{GroupBy, GroupOrder};
+
+pub mod order;
+use order::{Order, OrderBy};
 
 pub struct WildCard;
 
@@ -50,11 +56,11 @@ where
     S: Select,
     Q: Queryable,
 {
-    fn write_sql(&self, sql: &mut Sql) {
-        sql.buf.push_str("SELECT ");
-        Q::write_query(&mut sql.buf);
-        sql.buf.push_str(" FROM ");
-        sql.buf.push_str(S::Table::NAME);
+    fn write_sql(&self, sql: &mut String) {
+        sql.push_str("SELECT ");
+        Q::write_query(sql);
+        sql.push_str(" FROM ");
+        sql.push_str(S::Table::NAME);
         S::write_join(sql);
     }
 }
@@ -70,10 +76,10 @@ where
     Q: Queryable,
     P: Predicate,
 {
-    fn write_sql(&self, sql: &mut Sql) {
+    fn write_sql(&self, sql: &mut String) {
         self.select.write_sql(sql);
-        sql.buf.push_str(" WHERE ");
-        self.predicate.write_predicate(&mut sql.buf);
+        sql.push_str(" WHERE ");
+        self.predicate.write_predicate(sql);
     }
 }
 
@@ -84,12 +90,18 @@ pub trait QueryDsl: ToSql {
     where
         Self: Sized,
         F: FnOnce(<Self::Select as Join>::Fields) -> O,
+        O: GroupOrder,
+    {
+        GroupBy::new(self, f(Default::default()))
+    }
+
+    fn order_by<F, O>(self, f: F) -> OrderBy<Self, O>
+    where
+        Self: Sized,
+        F: FnOnce(<Self::Select as Join>::Fields) -> O,
         O: Order,
     {
-        GroupBy {
-            stmt: self,
-            order: f(Default::default()),
-        }
+        OrderBy::new(self, f(Default::default()))
     }
 }
 
@@ -108,29 +120,4 @@ where
     P: Predicate,
 {
     type Select = S;
-}
-
-pub struct GroupBy<Q, O> {
-    stmt: Q,
-    order: O,
-}
-
-impl<Q, O> ToSql for GroupBy<Q, O>
-where
-    Q: QueryDsl,
-    O: Order,
-{
-    fn write_sql(&self, sql: &mut Sql) {
-        self.stmt.write_sql(sql);
-        sql.buf.push_str(" GROUP BY ");
-        self.order.write_columns(sql);
-    }
-}
-
-impl<Q, O> QueryDsl for GroupBy<Q, O>
-where
-    Q: QueryDsl,
-    O: Order,
-{
-    type Select = Q::Select;
 }
