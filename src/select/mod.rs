@@ -8,17 +8,9 @@ use group::{GroupBy, GroupOrder};
 pub mod order;
 use order::{Order, OrderBy};
 
-pub struct WildCard;
-
-pub trait Queryable {
-    fn write_query(sql: &mut String);
-}
-
-impl Queryable for WildCard {
-    fn write_query(sql: &mut String) {
-        sql.push('*');
-    }
-}
+pub mod query;
+pub use query::WildCard;
+use query::Queryable;
 
 pub trait Selectable {
     type Table: Table;
@@ -48,14 +40,14 @@ impl<J: JoinSelect> Selectable for J {
 
 pub struct SelectStatement<S, Q> {
     from: S,
-    query: PhantomData<Q>,
+    query: Q
 }
 
 impl<S: Selectable, Q> SelectStatement<S, Q> {
-    pub fn new(from: S) -> Self {
+    pub fn new(from: S, query: Q) -> Self {
         Self {
             from,
-            query: PhantomData,
+            query,
         }
     }
 
@@ -77,7 +69,7 @@ where
 {
     fn write_sql(&self, sql: &mut String) {
         sql.push_str("SELECT ");
-        Q::write_query(sql);
+        self.query.write_query(sql);
         sql.push_str(" FROM ");
         sql.push_str(S::Table::NAME);
         self.from.write_join(sql);

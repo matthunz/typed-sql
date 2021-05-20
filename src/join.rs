@@ -119,7 +119,7 @@ pub trait JoinSelect {
     where
         Self: Sized,
     {
-        SelectStatement::new(self)
+        SelectStatement::new(self, WildCard)
     }
 }
 

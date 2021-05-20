@@ -15,7 +15,10 @@ pub use join::{Join, JoinSelect};
 
 pub mod select;
 pub use select::QueryDsl;
-use select::{SelectStatement, WildCard};
+use select::{
+    query::{Count, Queryable},
+    SelectStatement, WildCard,
+};
 
 mod sql;
 pub use sql::ToSql;
@@ -31,6 +34,44 @@ pub trait Table {
     where
         Self: Sized,
     {
-        SelectStatement::new(PhantomData)
+        SelectStatement::new(PhantomData, WildCard)
+    }
+
+    fn query<Q>(query: Q) -> SelectStatement<PhantomData<Self>, Q>
+    where
+        Self: Sized,
+        Q: Queryable,
+    {
+        SelectStatement::new(PhantomData, query)
+    }
+
+    /// # Examples
+    /// ```
+    /// use typed_sql::{Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {
+    ///    content: Option<String>
+    /// }
+    ///
+    /// let stmt = Post::count(|post| post.content);
+    /// assert_eq!(stmt.to_sql(), "SELECT COUNT(posts.content) FROM posts;");
+    /// ```
+    /// ## Wildcard
+    /// ```
+    /// use typed_sql::{Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {}
+    ///
+    /// let stmt = Post::count(|_| {});
+    /// assert_eq!(stmt.to_sql(), "SELECT COUNT(*) FROM posts;");
+    /// ```
+    fn count<F, T>(f: F) -> SelectStatement<PhantomData<Self>, Count<T>>
+    where
+        Self: Sized,
+        F: FnOnce(Self::Fields) -> T,
+    {
+        SelectStatement::new(PhantomData, Count::new(f(Default::default())))
     }
 }
