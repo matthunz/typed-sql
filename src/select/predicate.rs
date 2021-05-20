@@ -25,6 +25,23 @@ where
     }
 }
 
+pub struct Or<H, T> {
+    pub(crate) head: H,
+    pub(crate) tail: T,
+}
+
+impl<H, T> Predicate for Or<H, T>
+where
+    H: Predicate,
+    T: Predicate,
+{
+    fn write_predicate(&self, sql: &mut String) {
+        self.head.write_predicate(sql);
+        sql.push_str(" OR ");
+        self.tail.write_predicate(sql);
+    }
+}
+
 pub trait Operator {
     fn write_operator(sql: &mut String);
 }

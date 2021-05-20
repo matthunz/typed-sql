@@ -1,6 +1,6 @@
 pub mod predicate;
-use predicate::And;
 pub use predicate::Predicate;
+use predicate::{And, Or};
 
 pub mod query;
 pub use query::Query;
@@ -96,6 +96,28 @@ pub trait Select: Sized {
         P: Predicate,
     {
         And {
+            head: self,
+            tail: predicate,
+        }
+    }
+
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64   
+    /// }
+    ///
+    /// let stmt = User::table().select().filter(|user| user.id.eq(1).or(user.id.eq(3)));
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users WHERE users.id = 1 OR users.id = 3;");
+    fn or<P>(self, predicate: P) -> Or<Self, P>
+    where
+        Self: Predicate,
+        P: Predicate,
+    {
+        Or {
             head: self,
             tail: predicate,
         }
