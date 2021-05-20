@@ -31,6 +31,7 @@ where
     type Select = S;
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct Limit<Q> {
     queryable: Q,
     limit: usize,

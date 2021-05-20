@@ -1,10 +1,12 @@
 use crate::ToSql;
 use std::marker::PhantomData;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Bind {
     pub n: u8,
 }
 
+#[derive(Debug)]
 pub struct Binder {
     counter: u8,
 }
@@ -76,6 +78,15 @@ impl<B: Binding, S: ToSql> ToSql for Prepare<'_, B, S> {
     }
 }
 
+impl<B, S: Copy> Clone for Prepare<'_, B, S> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<B, S: Copy> Copy for Prepare<'_, B, S> {}
+
+#[derive(Debug, Clone, Copy)]
 pub struct Execute<'a, B> {
     name: &'a str,
     binding: B,

@@ -19,7 +19,7 @@ impl<I: Insertable> Insertable for &I {
 
 pub trait Insert<I>: Table {
     /// ```
-    /// use typed_sql::{Insert, Table}
+    /// use typed_sql::{Insert, Table};
     ///
     /// #[derive(Table)]
     /// struct User {

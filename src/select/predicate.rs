@@ -1,10 +1,8 @@
 use crate::bind::Bind;
 use crate::field::Field;
+use crate::types::Primative;
 use crate::Table;
-use std::{
-    fmt::{Display, Write},
-    marker::PhantomData,
-};
+use std::{fmt::Write, marker::PhantomData};
 
 pub trait Predicate {
     fn write_predicate(&self, sql: &mut String);
@@ -82,7 +80,7 @@ impl<T, A, U, O> Op<T, A, U, O> {
 impl<T, A, U, O> Predicate for Op<T, A, U, O>
 where
     T: Table,
-    U: Display,
+    U: Primative,
     O: Operator,
 {
     fn write_predicate(&self, sql: &mut String) {
@@ -90,7 +88,7 @@ where
         sql.push(' ');
         O::write_operator(sql);
         sql.push(' ');
-        sql.write_fmt(format_args!("{}", self.rhs)).unwrap();
+        self.rhs.write_primative(sql);
     }
 }
 

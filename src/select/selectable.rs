@@ -18,6 +18,7 @@ impl<J: JoinSelect> Selectable for J {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct SelectStatement<S, Q> {
     from: S,
     query: Q,
@@ -53,6 +54,7 @@ where
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Filter<S, Q, P> {
     select: SelectStatement<S, Q>,
     predicate: P,

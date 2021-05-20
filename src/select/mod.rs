@@ -17,6 +17,19 @@ pub use selectable::Selectable;
 use self::queryable::Limit;
 
 pub trait Select: Sized {
+    /// # Examples
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {
+    ///     content: String
+    /// }
+    ///
+    /// let stmt = Post::table().select().filter(|p| p.content.eq("foo"));
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM posts WHERE posts.content = 'foo';");
+    /// ```
     fn select(self) -> SelectStatement<Self, WildCard>
     where
         Self: Selectable,
