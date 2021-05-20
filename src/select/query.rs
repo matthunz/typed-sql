@@ -1,8 +1,8 @@
-use crate::{Table,};
 use crate::field::Field;
+use crate::Table;
 
 pub trait Queryable {
-    fn write_query(&self ,sql: &mut String);
+    fn write_query(&self, sql: &mut String);
 }
 
 pub struct WildCard;
@@ -14,7 +14,7 @@ impl Queryable for WildCard {
 }
 
 pub struct Count<T> {
-    column: T
+    column: T,
 }
 
 impl<T> Count<T> {

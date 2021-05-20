@@ -1,4 +1,4 @@
-use crate::{field::Predicate, join::JoinSelect};
+use crate::join::JoinSelect;
 use crate::{Table, ToSql};
 use std::marker::PhantomData;
 
@@ -8,9 +8,12 @@ use group::{GroupBy, GroupOrder};
 pub mod order;
 use order::{Order, OrderBy};
 
+pub mod predicate;
+pub use predicate::Predicate;
+
 pub mod query;
-pub use query::WildCard;
 use query::Queryable;
+pub use query::WildCard;
 
 pub trait Selectable {
     type Table: Table;
@@ -40,15 +43,12 @@ impl<J: JoinSelect> Selectable for J {
 
 pub struct SelectStatement<S, Q> {
     from: S,
-    query: Q
+    query: Q,
 }
 
 impl<S: Selectable, Q> SelectStatement<S, Q> {
     pub fn new(from: S, query: Q) -> Self {
-        Self {
-            from,
-            query,
-        }
+        Self { from, query }
     }
 
     pub fn filter<F, P>(self, f: F) -> Filter<S, Q, P>

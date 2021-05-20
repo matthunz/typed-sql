@@ -1,10 +1,7 @@
 use std::marker::PhantomData;
 
+use crate::select::{Predicate, SelectStatement, WildCard};
 use crate::Table;
-use crate::{
-    field::Predicate,
-    select::{SelectStatement, WildCard},
-};
 
 pub struct Inner;
 
@@ -47,9 +44,8 @@ impl JoinKind for Inner {
 /// );
 /// ```
 /// ```
-/// use typed_sql::{Table, ToSql};
+/// use typed_sql::{Predicate, Table, ToSql};
 /// use typed_sql::join::{Join, Joined, Inner, JoinSelect};
-/// use typed_sql::field::Predicate;
 ///
 /// #[derive(Table)]
 /// struct User {

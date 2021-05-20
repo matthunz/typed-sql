@@ -1,3 +1,26 @@
+//! ```
+//! use typed_sql::{Predicate, QueryDsl, Table, ToSql};
+//!
+//! #[derive(Table)]
+//! struct User {
+//!     id: i64,
+//!     name: String
+//! }
+//!
+//! let stmt = User::select()
+//!     .filter(|user| user.id.neq(1).and(user.id.lt(5)))
+//!     .group_by(|user| user.name)
+//!     .order_by(|user| user.name.then(user.id.ascending()));
+//!
+//! assert_eq!(
+//!     stmt.to_sql(),
+//!     "SELECT * FROM users \
+//!     WHERE users.id != 1 AND users.id < 5 \
+//!     GROUP BY users.name \
+//!     ORDER BY users.name,users.id ASC;"
+//! );
+//! ```
+
 #![feature(min_type_alias_impl_trait)]
 
 pub mod bind;
@@ -14,11 +37,11 @@ pub mod join;
 pub use join::{Join, JoinSelect};
 
 pub mod select;
-pub use select::QueryDsl;
 use select::{
     query::{Count, Queryable},
     SelectStatement, WildCard,
 };
+pub use select::{Predicate, QueryDsl};
 
 mod sql;
 pub use sql::ToSql;
