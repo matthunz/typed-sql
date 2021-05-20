@@ -1,7 +1,3 @@
-use crate::join::JoinSelect;
-use crate::{Table, ToSql};
-use std::marker::PhantomData;
-
 pub mod group;
 use group::{GroupBy, GroupOrder};
 
@@ -9,110 +5,105 @@ pub mod order;
 use order::{Order, OrderBy};
 
 pub mod predicate;
+use predicate::And;
 pub use predicate::Predicate;
 
 pub mod query;
-use query::Queryable;
-pub use query::WildCard;
+pub use query::Query;
+use query::{Count, Queryable, WildCard};
 
-pub trait Selectable {
-    type Table: Table;
-    type Fields: Default;
+pub mod selectable;
+use selectable::SelectStatement;
+pub use selectable::Selectable;
 
-    fn write_join(&self, sql: &mut String);
-}
-
-impl<T> Selectable for PhantomData<T>
-where
-    T: Table,
-{
-    type Table = T;
-    type Fields = T::Fields;
-
-    fn write_join(&self, _sql: &mut String) {}
-}
-
-impl<J: JoinSelect> Selectable for J {
-    type Table = J::Table;
-    type Fields = J::Fields;
-
-    fn write_join(&self, sql: &mut String) {
-        self.write_join_select(sql);
-    }
-}
-
-pub struct SelectStatement<S, Q> {
-    from: S,
-    query: Q,
-}
-
-impl<S: Selectable, Q> SelectStatement<S, Q> {
-    pub fn new(from: S, query: Q) -> Self {
-        Self { from, query }
-    }
-
-    pub fn filter<F, P>(self, f: F) -> Filter<S, Q, P>
+pub trait Select: Sized {
+    fn select(self) -> SelectStatement<Self, WildCard>
     where
-        F: FnOnce(S::Fields) -> P,
+        Self: Selectable,
     {
-        Filter {
-            select: self,
-            predicate: f(Default::default()),
-        }
+        self.query(WildCard)
     }
-}
 
-impl<S, Q> ToSql for SelectStatement<S, Q>
-where
-    S: Selectable,
-    Q: Queryable,
-{
-    fn write_sql(&self, sql: &mut String) {
-        sql.push_str("SELECT ");
-        self.query.write_query(sql);
-        sql.push_str(" FROM ");
-        sql.push_str(S::Table::NAME);
-        self.from.write_join(sql);
+    fn query<Q>(self, query: Q) -> SelectStatement<Self, Q>
+    where
+        Self: Selectable,
+        Q: Queryable,
+    {
+        SelectStatement::new(self, query)
     }
-}
-
-pub struct Filter<S, Q, P> {
-    select: SelectStatement<S, Q>,
-    predicate: P,
-}
-
-impl<S, Q, P> ToSql for Filter<S, Q, P>
-where
-    S: Selectable,
-    Q: Queryable,
-    P: Predicate,
-{
-    fn write_sql(&self, sql: &mut String) {
-        self.select.write_sql(sql);
-        sql.push_str(" WHERE ");
-        self.predicate.write_predicate(sql);
-    }
-}
-
-pub trait QueryDsl: ToSql {
-    type Select: Selectable;
 
     /// # Examples
     /// ```
-    /// use typed_sql::{Table, ToSql, QueryDsl};
+    /// use typed_sql::{Select, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {
+    ///    content: Option<String>
+    /// }
+    ///
+    /// let stmt = Post::table().count(|post| post.content);
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT COUNT(posts.content) FROM posts;");
+    /// ```
+    /// ## Wildcard
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {}
+    ///
+    /// let stmt = Post::table().count(|_| {});
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT COUNT(*) FROM posts;");
+    /// ```
+    fn count<F, T>(self, f: F) -> SelectStatement<Self, Count<T>>
+    where
+        Self: Selectable,
+        F: FnOnce(Self::Fields) -> T,
+        Count<T>: Queryable,
+    {
+        self.query(Count::new(f(Default::default())))
+    }
+
+    /// ```
+    /// use typed_sql::{Select, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64   
+    /// }
+    ///
+    /// let stmt = User::table().select().filter(|user| user.id.neq(2).and(user.id.lt(5)));
+    ///
+    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users WHERE users.id != 2 AND users.id < 5;");
+    /// ```
+    fn and<P>(self, predicate: P) -> And<Self, P>
+    where
+        Self: Predicate,
+        P: Predicate,
+    {
+        And {
+            head: self,
+            tail: predicate,
+        }
+    }
+
+    /// # Examples
+    /// ```
+    /// use typed_sql::{Table, ToSql, Select};
     ///
     /// #[derive(Table)]
     /// struct User {
     ///     id: i64
     /// }
     ///
-    /// let stmt = User::select().group_by(|user| user.id);
+    /// let stmt = User::table().select().group_by(|user| user.id);
     ///
     /// assert_eq!(stmt.to_sql(), "SELECT * FROM users GROUP BY users.id;");
     /// ```
     /// ## Multiple columns
     /// ```
-    /// use typed_sql::{Table, ToSql, QueryDsl};
+    /// use typed_sql::{Select, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -120,13 +111,13 @@ pub trait QueryDsl: ToSql {
     ///     name: String
     /// }
     ///
-    /// let stmt = User::select().group_by(|user| user.id.then(user.name));
+    /// let stmt = User::table().select().group_by(|user| user.id.then(user.name));
     ///
     /// assert_eq!(stmt.to_sql(), "SELECT * FROM users GROUP BY users.id,users.name;");
     /// ```
     fn group_by<F, O>(self, f: F) -> GroupBy<Self, O>
     where
-        Self: Sized,
+        Self: Query,
         F: FnOnce(<Self::Select as Selectable>::Fields) -> O,
         O: GroupOrder,
     {
@@ -135,7 +126,7 @@ pub trait QueryDsl: ToSql {
 
     /// # Examples
     /// ```
-    /// use typed_sql::{Table, ToSql, QueryDsl};
+    /// use typed_sql::{Select, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -143,26 +134,26 @@ pub trait QueryDsl: ToSql {
     ///     name: String
     /// }
     ///
-    /// let stmt = User::select().order_by(|user| user.id);
+    /// let stmt = User::table().select().order_by(|user| user.id);
     ///
     /// assert_eq!(stmt.to_sql(), "SELECT * FROM users ORDER BY users.id;");
     /// ```
     /// ## Direction
     /// ```
-    /// use typed_sql::{Table, ToSql, QueryDsl};
+    /// use typed_sql::{Select, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
     ///     id: i64
     /// }
     ///
-    /// let stmt = User::select().order_by(|user| user.id.ascending());
+    /// let stmt = User::table().select().order_by(|user| user.id.ascending());
     ///
     /// assert_eq!(stmt.to_sql(), "SELECT * FROM users ORDER BY users.id ASC;");
     /// ```
     /// ## Multiple columns
     /// ```
-    /// use typed_sql::{Table, ToSql, QueryDsl};
+    /// use typed_sql::{Select, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -170,14 +161,14 @@ pub trait QueryDsl: ToSql {
     ///     name: String
     /// }
     ///
-    /// let stmt = User::select()
+    /// let stmt = User::table().select()
     ///     .order_by(|user| user.id.ascending().then(user.name.descending()));
     ///
     /// assert_eq!(stmt.to_sql(), "SELECT * FROM users ORDER BY users.id ASC,users.name DESC;");
     /// ```
     fn order_by<F, O>(self, f: F) -> OrderBy<Self, O>
     where
-        Self: Sized,
+        Self: Query,
         F: FnOnce(<Self::Select as Selectable>::Fields) -> O,
         O: Order,
     {
@@ -185,19 +176,4 @@ pub trait QueryDsl: ToSql {
     }
 }
 
-impl<S, Q> QueryDsl for SelectStatement<S, Q>
-where
-    S: Selectable,
-    Q: Queryable,
-{
-    type Select = S;
-}
-
-impl<S, Q, P> QueryDsl for Filter<S, Q, P>
-where
-    S: Selectable,
-    Q: Queryable,
-    P: Predicate,
-{
-    type Select = S;
-}
+impl<T> Select for T {}

@@ -1,5 +1,28 @@
+use super::selectable::{Filter, SelectStatement, Selectable};
+use super::Predicate;
 use crate::field::Field;
-use crate::Table;
+use crate::{Table, ToSql};
+
+pub trait Query: ToSql {
+    type Select: Selectable;
+}
+
+impl<S, Q> Query for SelectStatement<S, Q>
+where
+    S: Selectable,
+    Q: Queryable,
+{
+    type Select = S;
+}
+
+impl<S, Q, P> Query for Filter<S, Q, P>
+where
+    S: Selectable,
+    Q: Queryable,
+    P: Predicate,
+{
+    type Select = S;
+}
 
 pub trait Queryable {
     fn write_query(&self, sql: &mut String);

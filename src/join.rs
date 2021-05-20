@@ -1,7 +1,8 @@
-use std::marker::PhantomData;
-
-use crate::select::{Predicate, SelectStatement, WildCard};
+use crate::select::query::WildCard;
+use crate::select::selectable::SelectStatement;
+use crate::select::Predicate;
 use crate::Table;
+use std::marker::PhantomData;
 
 pub struct Inner;
 
@@ -42,55 +43,6 @@ impl JoinKind for Inner {
 ///     join.select().to_sql(),
 ///     "SELECT * FROM users INNER JOIN posts ON users.id=posts.user_id;"
 /// );
-/// ```
-/// ```
-/// use typed_sql::{Predicate, Table, ToSql};
-/// use typed_sql::join::{Join, Joined, Inner, JoinSelect};
-///
-/// #[derive(Table)]
-/// struct User {
-///     id: i64   
-/// }
-///
-/// #[derive(Table)]
-/// struct Post {
-///     id: i64   
-/// }
-///
-/// struct UserPost {
-///     user: User,
-///     post: Post
-/// }
-///
-/// #[derive(Default)]
-/// struct UserPostFields {
-///     user: <User as Table>::Fields,
-///     post: <Post as Table>::Fields
-/// }
-///
-/// struct UserPostJoin<P> {
-///     post: Joined<P, Inner, Post>
-/// }
-///
-/// impl<P: Predicate> Join<P> for UserPost {
-///     type Table = User;
-///     type Fields = UserPostFields;
-///     type Join = UserPostJoin<P>;
-/// }
-
-/// impl<P: Predicate> JoinSelect for UserPostJoin<P> {
-///    type Table = User;
-///    type Fields = UserPostFields;
-///
-///    fn write_join_select(&self, sql: &mut String) {
-///         self.post.write_join(sql);
-///    }
-/// }
-///
-/// let join = UserPost::join(|join| UserPostJoin {
-///     post: Joined::new(join.user.id.eq(join.post.id)),
-/// });
-///
 /// ```
 pub trait Join<P> {
     type Table: Table;

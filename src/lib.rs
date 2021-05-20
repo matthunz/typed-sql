@@ -1,5 +1,5 @@
 //! ```
-//! use typed_sql::{Predicate, QueryDsl, Table, ToSql};
+//! use typed_sql::{Select, Table, ToSql};
 //!
 //! #[derive(Table)]
 //! struct User {
@@ -7,7 +7,7 @@
 //!     name: String
 //! }
 //!
-//! let stmt = User::select()
+//! let stmt = User::table().select()
 //!     .filter(|user| user.id.neq(1).and(user.id.lt(5)))
 //!     .group_by(|user| user.name)
 //!     .order_by(|user| user.name.then(user.id.ascending()));
@@ -34,14 +34,11 @@ pub mod insert;
 pub use insert::Insert;
 
 pub mod join;
-pub use join::{Join, JoinSelect};
+pub use join::Join;
 
 pub mod select;
-use select::{
-    query::{Count, Queryable},
-    SelectStatement, WildCard,
-};
-pub use select::{Predicate, QueryDsl};
+pub use select::Select;
+use select::Selectable;
 
 mod sql;
 pub use sql::ToSql;
@@ -53,48 +50,18 @@ pub trait Table {
 
     type Fields: Default;
 
-    fn select() -> SelectStatement<PhantomData<Self>, WildCard>
-    where
-        Self: Sized,
-    {
-        SelectStatement::new(PhantomData, WildCard)
+    fn table() -> SelectTable<Self> {
+        SelectTable { table: PhantomData }
     }
+}
 
-    fn query<Q>(query: Q) -> SelectStatement<PhantomData<Self>, Q>
-    where
-        Self: Sized,
-        Q: Queryable,
-    {
-        SelectStatement::new(PhantomData, query)
-    }
+pub struct SelectTable<T: ?Sized> {
+    table: PhantomData<T>,
+}
 
-    /// # Examples
-    /// ```
-    /// use typed_sql::{Table, ToSql};
-    ///
-    /// #[derive(Table)]
-    /// struct Post {
-    ///    content: Option<String>
-    /// }
-    ///
-    /// let stmt = Post::count(|post| post.content);
-    /// assert_eq!(stmt.to_sql(), "SELECT COUNT(posts.content) FROM posts;");
-    /// ```
-    /// ## Wildcard
-    /// ```
-    /// use typed_sql::{Table, ToSql};
-    ///
-    /// #[derive(Table)]
-    /// struct Post {}
-    ///
-    /// let stmt = Post::count(|_| {});
-    /// assert_eq!(stmt.to_sql(), "SELECT COUNT(*) FROM posts;");
-    /// ```
-    fn count<F, T>(f: F) -> SelectStatement<PhantomData<Self>, Count<T>>
-    where
-        Self: Sized,
-        F: FnOnce(Self::Fields) -> T,
-    {
-        SelectStatement::new(PhantomData, Count::new(f(Default::default())))
-    }
+impl<T: Table + ?Sized> Selectable for SelectTable<T> {
+    type Table = T;
+    type Fields = T::Fields;
+
+    fn write_join(&self, _sql: &mut String) {}
 }

@@ -1,6 +1,6 @@
 use crate::field::{Field, Then};
-use crate::Table;
-use crate::{QueryDsl, ToSql};
+use crate::select::Query;
+use crate::{Table, ToSql};
 use std::marker::PhantomData;
 
 pub struct OrderBy<Q, O> {
@@ -16,7 +16,7 @@ impl<Q, O> OrderBy<Q, O> {
 
 impl<Q, O> ToSql for OrderBy<Q, O>
 where
-    Q: QueryDsl,
+    Q: Query,
     O: Order,
 {
     fn write_sql(&self, sql: &mut String) {
@@ -26,9 +26,9 @@ where
     }
 }
 
-impl<Q, O> QueryDsl for OrderBy<Q, O>
+impl<Q, O> Query for OrderBy<Q, O>
 where
-    Q: QueryDsl,
+    Q: Query,
     O: Order,
 {
     type Select = Q::Select;

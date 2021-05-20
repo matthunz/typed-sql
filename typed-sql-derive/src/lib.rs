@@ -119,7 +119,7 @@ pub fn join(input: TokenStream) -> TokenStream {
 
         let impl_generics = generics.clone().map(|generic| {
             quote! {
-                #generic: typed_sql::Predicate
+                #generic: typed_sql::select::Predicate
             }
         });
         let impl_generics = quote! {

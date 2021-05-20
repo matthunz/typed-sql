@@ -8,33 +8,11 @@ use std::{
 
 pub trait Predicate {
     fn write_predicate(&self, sql: &mut String);
-
-    /// ```
-    /// use typed_sql::{Predicate, Table, ToSql};
-    ///
-    /// #[derive(Table)]
-    /// struct User {
-    ///     id: i64   
-    /// }
-    ///
-    /// let stmt = User::select().filter(|user| user.id.neq(2).and(user.id.lt(5)));
-    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users WHERE users.id != 2 AND users.id < 5;");
-    /// ```
-    fn and<P>(self, predicate: P) -> And<Self, P>
-    where
-        Self: Sized,
-        P: Predicate,
-    {
-        And {
-            head: self,
-            tail: predicate,
-        }
-    }
 }
 
 pub struct And<H, T> {
-    head: H,
-    tail: T,
+    pub(crate) head: H,
+    pub(crate) tail: T,
 }
 
 impl<H, T> Predicate for And<H, T>
