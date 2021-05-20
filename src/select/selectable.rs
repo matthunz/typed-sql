@@ -1,4 +1,4 @@
-use super::{Predicate, Queryable};
+use super::{Predicate, Query};
 use crate::join::JoinSelect;
 use crate::{Table, ToSql};
 
@@ -42,7 +42,7 @@ impl<S: Selectable, Q> SelectStatement<S, Q> {
 impl<S, Q> ToSql for SelectStatement<S, Q>
 where
     S: Selectable,
-    Q: Queryable,
+    Q: Query,
 {
     fn write_sql(&self, sql: &mut String) {
         sql.push_str("SELECT ");
@@ -61,7 +61,7 @@ pub struct Filter<S, Q, P> {
 impl<S, Q, P> ToSql for Filter<S, Q, P>
 where
     S: Selectable,
-    Q: Queryable,
+    Q: Query,
     P: Predicate,
 {
     fn write_sql(&self, sql: &mut String) {

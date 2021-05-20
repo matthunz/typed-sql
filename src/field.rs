@@ -1,5 +1,5 @@
-use crate::select::order::{Ascending, Descending, Ordered};
 use crate::select::predicate::{Eq, Gt, Lt, Neq, Op};
+use crate::select::queryable::order::{Ascending, Descending, Ordered};
 use crate::Table;
 
 use std::marker::PhantomData;

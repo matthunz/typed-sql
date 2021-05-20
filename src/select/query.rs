@@ -1,36 +1,13 @@
-use super::selectable::{Filter, SelectStatement, Selectable};
-use super::Predicate;
 use crate::field::Field;
-use crate::{Table, ToSql};
+use crate::Table;
 
-pub trait Query: ToSql {
-    type Select: Selectable;
-}
-
-impl<S, Q> Query for SelectStatement<S, Q>
-where
-    S: Selectable,
-    Q: Queryable,
-{
-    type Select = S;
-}
-
-impl<S, Q, P> Query for Filter<S, Q, P>
-where
-    S: Selectable,
-    Q: Queryable,
-    P: Predicate,
-{
-    type Select = S;
-}
-
-pub trait Queryable {
+pub trait Query {
     fn write_query(&self, sql: &mut String);
 }
 
 pub struct WildCard;
 
-impl Queryable for WildCard {
+impl Query for WildCard {
     fn write_query(&self, sql: &mut String) {
         sql.push('*');
     }
@@ -46,19 +23,19 @@ impl<T> Count<T> {
     }
 }
 
-impl Queryable for Count<()> {
+impl Query for Count<()> {
     fn write_query(&self, sql: &mut String) {
         write_wildcard(sql);
     }
 }
 
-impl Queryable for Count<WildCard> {
+impl Query for Count<WildCard> {
     fn write_query(&self, sql: &mut String) {
         write_wildcard(sql);
     }
 }
 
-impl<T: Table, A> Queryable for Count<Field<T, A>> {
+impl<T: Table, A> Query for Count<Field<T, A>> {
     fn write_query(&self, sql: &mut String) {
         sql.push_str("COUNT(");
         self.column.write_field(sql);

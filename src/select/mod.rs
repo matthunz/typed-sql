@@ -1,20 +1,20 @@
-pub mod group;
-use group::{GroupBy, GroupOrder};
-
-pub mod order;
-use order::{Order, OrderBy};
-
 pub mod predicate;
 use predicate::And;
 pub use predicate::Predicate;
 
 pub mod query;
 pub use query::Query;
-use query::{Count, Queryable, WildCard};
+use query::{Count, WildCard};
+
+pub mod queryable;
+pub use queryable::Queryable;
+use queryable::{GroupBy, GroupOrder, Order, OrderBy};
 
 pub mod selectable;
 use selectable::SelectStatement;
 pub use selectable::Selectable;
+
+use self::queryable::Limit;
 
 pub trait Select: Sized {
     fn select(self) -> SelectStatement<Self, WildCard>
@@ -27,7 +27,7 @@ pub trait Select: Sized {
     fn query<Q>(self, query: Q) -> SelectStatement<Self, Q>
     where
         Self: Selectable,
-        Q: Queryable,
+        Q: Query,
     {
         SelectStatement::new(self, query)
     }
@@ -60,7 +60,7 @@ pub trait Select: Sized {
     where
         Self: Selectable,
         F: FnOnce(Self::Fields) -> T,
-        Count<T>: Queryable,
+        Count<T>: Query,
     {
         self.query(Count::new(f(Default::default())))
     }
@@ -117,7 +117,7 @@ pub trait Select: Sized {
     /// ```
     fn group_by<F, O>(self, f: F) -> GroupBy<Self, O>
     where
-        Self: Query,
+        Self: Queryable,
         F: FnOnce(<Self::Select as Selectable>::Fields) -> O,
         O: GroupOrder,
     {
@@ -168,11 +168,18 @@ pub trait Select: Sized {
     /// ```
     fn order_by<F, O>(self, f: F) -> OrderBy<Self, O>
     where
-        Self: Query,
+        Self: Queryable,
         F: FnOnce(<Self::Select as Selectable>::Fields) -> O,
         O: Order,
     {
         OrderBy::new(self, f(Default::default()))
+    }
+
+    fn limit(self, limit: usize) -> Limit<Self>
+    where
+        Self: Queryable,
+    {
+        Limit::new(self, limit)
     }
 }
 

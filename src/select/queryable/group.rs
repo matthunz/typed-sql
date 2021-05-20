@@ -1,5 +1,5 @@
 use crate::field::{Field, Then};
-use crate::select::Query;
+use crate::select::Queryable;
 use crate::{Table, ToSql};
 
 pub trait GroupOrder {
@@ -33,14 +33,14 @@ pub struct GroupBy<Q, O> {
 }
 
 impl<Q, O> GroupBy<Q, O> {
-    pub(super) fn new(stmt: Q, order: O) -> Self {
+    pub(crate) fn new(stmt: Q, order: O) -> Self {
         Self { stmt, order }
     }
 }
 
 impl<Q, O> ToSql for GroupBy<Q, O>
 where
-    Q: Query,
+    Q: Queryable,
     O: GroupOrder,
 {
     fn write_sql(&self, sql: &mut String) {
@@ -50,9 +50,9 @@ where
     }
 }
 
-impl<Q, O> Query for GroupBy<Q, O>
+impl<Q, O> Queryable for GroupBy<Q, O>
 where
-    Q: Query,
+    Q: Queryable,
     O: GroupOrder,
 {
     type Select = Q::Select;

@@ -1,5 +1,5 @@
 use crate::field::{Field, Then};
-use crate::select::Query;
+use crate::select::Queryable;
 use crate::{Table, ToSql};
 use std::marker::PhantomData;
 
@@ -9,14 +9,14 @@ pub struct OrderBy<Q, O> {
 }
 
 impl<Q, O> OrderBy<Q, O> {
-    pub(super) fn new(stmt: Q, order: O) -> Self {
+    pub(crate) fn new(stmt: Q, order: O) -> Self {
         Self { stmt, order }
     }
 }
 
 impl<Q, O> ToSql for OrderBy<Q, O>
 where
-    Q: Query,
+    Q: Queryable,
     O: Order,
 {
     fn write_sql(&self, sql: &mut String) {
@@ -26,9 +26,9 @@ where
     }
 }
 
-impl<Q, O> Query for OrderBy<Q, O>
+impl<Q, O> Queryable for OrderBy<Q, O>
 where
-    Q: Query,
+    Q: Queryable,
     O: Order,
 {
     type Select = Q::Select;
