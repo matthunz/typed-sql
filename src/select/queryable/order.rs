@@ -32,6 +32,7 @@ where
     O: Order,
 {
     type Select = Q::Select;
+    type Query = Q::Query;
 }
 
 pub trait Direction {

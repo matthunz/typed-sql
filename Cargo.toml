@@ -9,4 +9,5 @@ edition = "2018"
 name = "typed_sql"
 
 [dependencies]
+async-trait = "0.1.50"
 typed-sql-derive = { path = "typed-sql-derive" }

@@ -23,12 +23,15 @@
 //! );
 //! ```
 
+#![feature(associated_type_defaults)]
 #![feature(min_type_alias_impl_trait)]
 
-pub mod bind;
 use std::marker::PhantomData;
 
+pub mod bind;
 pub use bind::Binding;
+
+pub mod conn;
 
 pub mod field;
 

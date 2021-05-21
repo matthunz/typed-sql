@@ -12,6 +12,7 @@ pub use order::{Order, OrderBy};
 
 pub trait Queryable: ToSql {
     type Select: Selectable;
+    type Query: Query;
 }
 
 impl<S, Q> Queryable for SelectStatement<S, Q>
@@ -20,6 +21,7 @@ where
     Q: Query,
 {
     type Select = S;
+    type Query = Q;
 }
 
 impl<S, Q, P> Queryable for Filter<S, Q, P>
@@ -29,6 +31,7 @@ where
     P: Predicate,
 {
     type Select = S;
+    type Query = Q;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -54,4 +57,5 @@ impl<Q: Queryable> ToSql for Limit<Q> {
 
 impl<Q: Queryable> Queryable for Limit<Q> {
     type Select = Q::Select;
+    type Query = Q::Query;
 }

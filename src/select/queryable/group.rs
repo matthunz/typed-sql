@@ -56,4 +56,5 @@ where
     O: GroupOrder,
 {
     type Select = Q::Select;
+    type Query = Q::Query;
 }
