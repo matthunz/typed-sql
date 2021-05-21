@@ -1,5 +1,11 @@
 use std::fmt::Write;
 
+pub mod bind;
+pub use bind::Bind;
+
+pub mod field;
+pub use field::Field;
+
 pub trait Primative {
     fn write_primative(&self, sql: &mut String);
 }

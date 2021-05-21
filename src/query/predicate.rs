@@ -1,6 +1,5 @@
-use crate::bind::Bind;
-use crate::field::Field;
 use crate::types::Primative;
+use crate::types::{Bind, Field};
 use crate::Table;
 use std::{fmt::Write, marker::PhantomData};
 

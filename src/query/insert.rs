@@ -17,38 +17,14 @@ impl<I: Insertable> Insertable for &I {
     }
 }
 
-pub trait Insert<I>: Table {
-    /// ```
-    /// use typed_sql::{Insert, Table};
-    ///
-    /// #[derive(Table)]
-    /// struct User {
-    ///     id: i64,
-    ///     name: String
-    /// }
-    ///
-    /// struct UserInsert {}
-    /// ```
-    fn insert(value: I) -> InsertStatement<Self, I>
-    where
-        I: Insertable,
-    {
-        InsertStatement::new(value)
-    }
-
-    fn insert_values(values: I) -> InsertStatement<Self, Values<I>>
-    where
-        I: IntoIterator + Clone,
-        I::Item: Insertable,
-    {
-        InsertStatement::new(Values { iter: values })
-    }
-}
-
-impl<I, T: Table> Insert<I> for T {}
-
 pub struct Values<I> {
     iter: I,
+}
+
+impl<I> Values<I> {
+    pub(crate) fn new(iter: I) -> Self {
+        Self { iter }
+    }
 }
 
 pub struct InsertStatement<T: ?Sized, V> {
@@ -60,7 +36,7 @@ impl<T, I> InsertStatement<T, I>
 where
     T: Table + ?Sized,
 {
-    fn new(values: I) -> Self {
+    pub(crate) fn new(values: I) -> Self {
         Self {
             values,
             _table: PhantomData,

@@ -1,6 +1,6 @@
-use crate::select::query::WildCard;
-use crate::select::selectable::SelectStatement;
-use crate::select::Predicate;
+use super::SelectStatement;
+use crate::query::queryable::WildCard;
+use crate::query::Predicate;
 use crate::Table;
 use std::marker::PhantomData;
 
@@ -15,8 +15,8 @@ impl JoinKind for Inner {
 }
 
 /// ```
-/// use typed_sql::{Join, Table, ToSql};
-/// use typed_sql::join::{JoinSelect, Joined};
+/// use typed_sql::{Join, Query, Table, ToSql};
+/// use typed_sql::query::Joined;
 ///
 /// #[derive(Table)]
 /// struct User {

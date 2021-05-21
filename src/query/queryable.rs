@@ -1,13 +1,13 @@
-use crate::field::Field;
+use crate::types::Field;
 use crate::Table;
 
-pub trait Query {
+pub trait Queryable {
     fn write_query(&self, sql: &mut String);
 }
 
 pub struct WildCard;
 
-impl Query for WildCard {
+impl Queryable for WildCard {
     fn write_query(&self, sql: &mut String) {
         sql.push('*');
     }
@@ -23,19 +23,19 @@ impl<T> Count<T> {
     }
 }
 
-impl Query for Count<()> {
+impl Queryable for Count<()> {
     fn write_query(&self, sql: &mut String) {
         write_wildcard(sql);
     }
 }
 
-impl Query for Count<WildCard> {
+impl Queryable for Count<WildCard> {
     fn write_query(&self, sql: &mut String) {
         write_wildcard(sql);
     }
 }
 
-impl<T: Table, A> Query for Count<Field<T, A>> {
+impl<T: Table, A> Queryable for Count<Field<T, A>> {
     fn write_query(&self, sql: &mut String) {
         sql.push_str("COUNT(");
         self.column.write_field(sql);

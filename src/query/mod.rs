@@ -1,25 +1,32 @@
+use crate::table::TableQueryable;
+
+pub mod delete;
+use delete::Delete;
+
+pub mod filter;
+use filter::Filter;
+pub use filter::Filterable;
+
+pub mod insert;
+pub use insert::Insertable;
+use insert::{InsertStatement, Values};
+
 pub mod predicate;
 pub use predicate::Predicate;
 use predicate::{And, Or};
 
-pub mod query;
-pub use query::Query;
-use query::{Count, WildCard};
-
 pub mod queryable;
 pub use queryable::Queryable;
-use queryable::{GroupBy, GroupOrder, Order, OrderBy};
+use queryable::{Count, WildCard};
 
-pub mod selectable;
-use selectable::SelectStatement;
-pub use selectable::Selectable;
+pub mod select;
+use select::{GroupBy, GroupOrder, Limit, Order, OrderBy, SelectStatement, Selectable};
+pub use select::{Join, Joined, Select};
 
-use self::queryable::Limit;
-
-pub trait Select: Sized {
+pub trait Query: Sized {
     /// # Examples
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct Post {
@@ -40,14 +47,14 @@ pub trait Select: Sized {
     fn query<Q>(self, query: Q) -> SelectStatement<Self, Q>
     where
         Self: Selectable,
-        Q: Query,
+        Q: Queryable,
     {
         SelectStatement::new(self, query)
     }
 
     /// # Examples
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct Post {
@@ -60,7 +67,7 @@ pub trait Select: Sized {
     /// ```
     /// ## Wildcard
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct Post {}
@@ -73,13 +80,68 @@ pub trait Select: Sized {
     where
         Self: Selectable,
         F: FnOnce(Self::Fields) -> T,
-        Count<T>: Query,
+        Count<T>: Queryable,
     {
         self.query(Count::new(f(Default::default())))
     }
 
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table};
+    ///
+    /// #[derive(Table)]
+    /// struct User {
+    ///     id: i64,
+    ///     name: String
+    /// }
+    ///
+    /// struct UserInsert {}
+    /// ```
+    fn insert<I>(self, value: I) -> InsertStatement<Self::Table, I>
+    where
+        Self: TableQueryable,
+        I: Insertable,
+    {
+        InsertStatement::new(value)
+    }
+
+    fn insert_values<I>(self, values: I) -> InsertStatement<Self::Table, Values<I>>
+    where
+        Self: TableQueryable,
+        I: IntoIterator + Clone,
+        I::Item: Insertable,
+    {
+        InsertStatement::new(Values::new(values))
+    }
+
+    /// ```
+    /// use typed_sql::{Query, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {
+    ///     id: i64
+    /// }
+    ///
+    /// let stmt = Post::table().delete().filter(|p| p.id.eq(2));
+    ///
+    /// assert_eq!(stmt.to_sql(), "DELETE FROM posts WHERE posts.id = 2;");
+    /// ```
+    fn delete(self) -> Delete<Self::Table>
+    where
+        Self: TableQueryable,
+    {
+        Delete::new()
+    }
+
+    fn filter<F, P>(self, f: F) -> Filter<Self, P>
+    where
+        Self: Filterable,
+        F: FnOnce(Self::Fields) -> P,
+    {
+        Filter::new(self, f(Default::default()))
+    }
+
+    /// ```
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -102,7 +164,7 @@ pub trait Select: Sized {
     }
 
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -125,7 +187,7 @@ pub trait Select: Sized {
 
     /// # Examples
     /// ```
-    /// use typed_sql::{Table, ToSql, Select};
+    /// use typed_sql::{Table, ToSql, Query};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -138,7 +200,7 @@ pub trait Select: Sized {
     /// ```
     /// ## Multiple columns
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -152,8 +214,8 @@ pub trait Select: Sized {
     /// ```
     fn group_by<F, O>(self, f: F) -> GroupBy<Self, O>
     where
-        Self: Queryable,
-        F: FnOnce(<Self::Select as Selectable>::Fields) -> O,
+        Self: Select,
+        F: FnOnce(<Self::Selectable as Selectable>::Fields) -> O,
         O: GroupOrder,
     {
         GroupBy::new(self, f(Default::default()))
@@ -161,7 +223,7 @@ pub trait Select: Sized {
 
     /// # Examples
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -175,7 +237,7 @@ pub trait Select: Sized {
     /// ```
     /// ## Direction
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -188,7 +250,7 @@ pub trait Select: Sized {
     /// ```
     /// ## Multiple columns
     /// ```
-    /// use typed_sql::{Select, Table, ToSql};
+    /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -203,8 +265,8 @@ pub trait Select: Sized {
     /// ```
     fn order_by<F, O>(self, f: F) -> OrderBy<Self, O>
     where
-        Self: Queryable,
-        F: FnOnce(<Self::Select as Selectable>::Fields) -> O,
+        Self: Select,
+        F: FnOnce(<Self::Selectable as Selectable>::Fields) -> O,
         O: Order,
     {
         OrderBy::new(self, f(Default::default()))
@@ -212,10 +274,10 @@ pub trait Select: Sized {
 
     fn limit(self, limit: usize) -> Limit<Self>
     where
-        Self: Queryable,
+        Self: Select,
     {
         Limit::new(self, limit)
     }
 }
 
-impl<T> Select for T {}
+impl<T> Query for T {}

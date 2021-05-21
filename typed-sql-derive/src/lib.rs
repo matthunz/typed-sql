@@ -24,14 +24,14 @@ pub fn table(input: TokenStream) -> TokenStream {
             let name = &field.ident;
             let ty = &field.ty;
             quote! {
-                #name: typed_sql::field::Field::<#ident, #ty>,
+                #name: typed_sql::types::Field::<#ident, #ty>,
             }
         });
 
         let default_fields = fields.named.iter().map(|field| {
             let name = &field.ident;
             quote! {
-                #name: typed_sql::field::Field::new(stringify!(#name)),
+                #name: typed_sql::types::Field::new(stringify!(#name)),
             }
         });
 
@@ -97,7 +97,7 @@ pub fn join(input: TokenStream) -> TokenStream {
             let g = format_ident!("{}", g);
             let ty = &field.ty;
             quote! {
-                #name: typed_sql::join::Joined<#g, typed_sql::join::Inner, #ty>
+                #name: typed_sql::query::select::join::Joined<#g, typed_sql::query::select::join::Inner, #ty>
             }
         });
 
@@ -119,7 +119,7 @@ pub fn join(input: TokenStream) -> TokenStream {
 
         let impl_generics = generics.clone().map(|generic| {
             quote! {
-                #generic: typed_sql::select::Predicate
+                #generic: typed_sql::query::Predicate
             }
         });
         let impl_generics = quote! {
@@ -142,7 +142,7 @@ pub fn join(input: TokenStream) -> TokenStream {
                 type Join = #join_ident<#join_generics>;
             }
 
-            impl<#impl_generics> typed_sql::join::JoinSelect for #join_ident<#join_generics> {
+            impl<#impl_generics> typed_sql::query::select::join::JoinSelect for #join_ident<#join_generics> {
                 type Table = #table;
                 type Fields = #fields_ident;
 

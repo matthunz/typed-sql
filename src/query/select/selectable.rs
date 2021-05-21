@@ -1,12 +1,20 @@
-use super::{Predicate, Query};
-use crate::join::JoinSelect;
-use crate::{Table, ToSql};
+use super::join::JoinSelect;
+use super::Queryable;
+use crate::table::{Table, TableQuery};
+use crate::ToSql;
 
 pub trait Selectable {
     type Table: Table + ?Sized;
     type Fields: Default;
 
     fn write_join(&self, sql: &mut String);
+}
+
+impl<T: Table + ?Sized> Selectable for TableQuery<T> {
+    type Table = T;
+    type Fields = T::Fields;
+
+    fn write_join(&self, _sql: &mut String) {}
 }
 
 impl<J: JoinSelect> Selectable for J {
@@ -28,22 +36,12 @@ impl<S: Selectable, Q> SelectStatement<S, Q> {
     pub fn new(from: S, query: Q) -> Self {
         Self { from, query }
     }
-
-    pub fn filter<F, P>(self, f: F) -> Filter<S, Q, P>
-    where
-        F: FnOnce(S::Fields) -> P,
-    {
-        Filter {
-            select: self,
-            predicate: f(Default::default()),
-        }
-    }
 }
 
 impl<S, Q> ToSql for SelectStatement<S, Q>
 where
     S: Selectable,
-    Q: Query,
+    Q: Queryable,
 {
     fn write_sql(&self, sql: &mut String) {
         sql.push_str("SELECT ");
@@ -51,24 +49,5 @@ where
         sql.push_str(" FROM ");
         sql.push_str(S::Table::NAME);
         self.from.write_join(sql);
-    }
-}
-
-#[derive(Clone, Copy)]
-pub struct Filter<S, Q, P> {
-    select: SelectStatement<S, Q>,
-    predicate: P,
-}
-
-impl<S, Q, P> ToSql for Filter<S, Q, P>
-where
-    S: Selectable,
-    Q: Query,
-    P: Predicate,
-{
-    fn write_sql(&self, sql: &mut String) {
-        self.select.write_sql(sql);
-        sql.push_str(" WHERE ");
-        self.predicate.write_predicate(sql);
     }
 }

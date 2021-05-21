@@ -1,5 +1,5 @@
 //! ```
-//! use typed_sql::{Select, Table, ToSql};
+//! use typed_sql::{Query, Table, ToSql};
 //!
 //! #[derive(Table)]
 //! struct User {
@@ -26,57 +26,17 @@
 #![feature(associated_type_defaults)]
 #![feature(min_type_alias_impl_trait)]
 
-use std::marker::PhantomData;
-
-pub mod bind;
-pub use bind::Binding;
-
 pub mod conn;
 
-pub mod field;
-
-pub mod insert;
-pub use insert::Insert;
-
-pub mod join;
-pub use join::Join;
-
-pub mod select;
-pub use select::Select;
-use select::Selectable;
+pub mod query;
+pub use query::{Join, Query};
 
 mod sql;
 pub use sql::ToSql;
 
+pub mod table;
+pub use table::Table;
+
 pub mod types;
 
 pub use typed_sql_derive::*;
-
-pub trait Table {
-    const NAME: &'static str;
-
-    type Fields: Default;
-
-    fn table() -> SelectTable<Self> {
-        SelectTable { table: PhantomData }
-    }
-}
-
-pub struct SelectTable<T: ?Sized> {
-    table: PhantomData<T>,
-}
-
-impl<T: Table + ?Sized> Selectable for SelectTable<T> {
-    type Table = T;
-    type Fields = T::Fields;
-
-    fn write_join(&self, _sql: &mut String) {}
-}
-
-impl<T: ?Sized> Clone for SelectTable<T> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl<T: ?Sized> Copy for SelectTable<T> {}

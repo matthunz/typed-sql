@@ -1,4 +1,5 @@
-use crate::{select::Queryable, ToSql};
+use crate::query::Select;
+use crate::ToSql;
 use async_trait::async_trait;
 
 pub trait Row {
@@ -28,11 +29,11 @@ pub trait Load<C: Connection>: ToSql + Sized {
     }
 }
 
-impl<C, Q> Load<C> for Q
+impl<C, S> Load<C> for S
 where
     C: Connection,
-    Q: Queryable,
-    Q::Query: FromRow<C::Row>,
+    S: Select,
+    S::Queryable: FromRow<C::Row>,
 {
-    type Output = Q::Query;
+    type Output = S::Queryable;
 }
