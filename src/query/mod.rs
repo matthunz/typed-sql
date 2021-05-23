@@ -1,4 +1,4 @@
-use crate::table::TableQueryable;
+use crate::{table::TableQueryable, Table};
 
 pub mod delete;
 use delete::Delete;
@@ -15,13 +15,13 @@ pub mod predicate;
 pub use predicate::Predicate;
 use predicate::{And, Or};
 
-pub mod queryable;
-pub use queryable::Queryable;
-use queryable::{Count, WildCard};
-
 pub mod select;
+use select::queryable::{Count, Queryable, WildCard};
 use select::{GroupBy, GroupOrder, Limit, Order, OrderBy, SelectStatement, Selectable};
 pub use select::{Join, Joined, Select};
+
+pub mod update;
+use update::{Update, UpdateSet};
 
 pub trait Query: Sized {
     /// # Examples
@@ -111,6 +111,35 @@ pub trait Query: Sized {
         I::Item: Insertable,
     {
         InsertStatement::new(Values::new(values))
+    }
+
+    /// ```
+    /// use typed_sql::{Query, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {
+    ///     id: i64,
+    ///     name: String
+    /// }
+    ///
+    /// let stmt = Post::table()
+    ///     .update(|p| p.id.eq(2).and(p.name.eq("foo")))
+    ///     .filter(|p| p.id.eq(1));
+    ///
+    /// assert_eq!(
+    ///     stmt.to_sql(),
+    ///     "UPDATE posts \
+    ///     SET posts.id = 2,posts.name = 'foo' \
+    ///     WHERE posts.id = 1;"
+    /// );
+    /// ```
+    fn update<F, S>(self, f: F) -> Update<Self::Table, S>
+    where
+        Self: TableQueryable,
+        F: FnOnce(<Self::Table as Table>::Fields) -> S,
+        S: UpdateSet,
+    {
+        Update::new(f(Default::default()))
     }
 
     /// ```

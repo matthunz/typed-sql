@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use super::filter::Filter;
-use super::{Predicate, Queryable};
+use super::Predicate;
 use crate::ToSql;
 
 pub mod group;
@@ -12,6 +12,9 @@ pub use join::{Join, Joined};
 
 pub mod order;
 pub use order::{Order, OrderBy};
+
+pub mod queryable;
+pub use queryable::{Queryable, WildCard};
 
 mod selectable;
 pub use selectable::{SelectStatement, Selectable};

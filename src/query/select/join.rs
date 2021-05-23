@@ -1,5 +1,5 @@
 use super::SelectStatement;
-use crate::query::queryable::WildCard;
+use crate::query::select::WildCard;
 use crate::query::Predicate;
 use crate::Table;
 use std::marker::PhantomData;

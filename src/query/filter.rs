@@ -1,5 +1,6 @@
 use super::delete::Delete;
 use super::select::{Select, Selectable};
+use super::update::Update;
 use super::Predicate;
 use crate::{Table, ToSql};
 
@@ -7,11 +8,15 @@ pub trait Filterable {
     type Fields: Default;
 }
 
-impl<Q: Select> Filterable for Q {
-    type Fields = <Q::Selectable as Selectable>::Fields;
+impl<S: Select> Filterable for S {
+    type Fields = <S::Selectable as Selectable>::Fields;
 }
 
 impl<T: Table + ?Sized> Filterable for Delete<T> {
+    type Fields = T::Fields;
+}
+
+impl<T: Table + ?Sized, S> Filterable for Update<T, S> {
     type Fields = T::Fields;
 }
 
