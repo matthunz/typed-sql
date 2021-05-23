@@ -2,6 +2,9 @@
 name = "typed-sql-derive"
 version = "0.1.0"
 edition = "2018"
+license = "MIT"
+description = "Macro implementation for typed-sql"
+repository = "https://github.com/matthunz/typed-sql"
 
 [lib]
 name = "typed_sql_derive"

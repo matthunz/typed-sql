@@ -2,6 +2,9 @@
 name = "typed-sql"
 version = "0.1.0"
 edition = "2018"
+license = "MIT"
+description = "A strongly typed sql serialization/deserialization framework"
+repository = "https://github.com/matthunz/typed-sql"
 
 [workspace]
 
@@ -10,4 +13,4 @@ name = "typed_sql"
 
 [dependencies]
 async-trait = "0.1.50"
-typed-sql-derive = { path = "typed-sql-derive" }
+typed-sql-derive = "0.1.0"
