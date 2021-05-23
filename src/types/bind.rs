@@ -69,9 +69,9 @@ impl<B: Binding, S: ToSql> ToSql for Prepare<'_, B, S> {
         sql.push_str("PREPARE ");
         sql.push_str(self.name);
 
-        sql.push('(');
+       
         B::write_types(sql);
-        sql.push(')');
+    
 
         sql.push_str(" AS ");
         self.stmt.write_sql(sql);

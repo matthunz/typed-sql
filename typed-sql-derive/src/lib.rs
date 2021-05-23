@@ -197,6 +197,61 @@ pub fn insertable(input: TokenStream) -> TokenStream {
     }
 }
 
+#[proc_macro_derive(Binding)]
+pub fn binding(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    if let Data::Struct(DataStruct {
+        fields: Fields::Named(fields),
+        ..
+    }) = input.data
+    {
+        let ident = &input.ident;
+        let bindings = format_ident!("{}Bindings", ident);
+
+        let bind_fields = fields.named.iter().map(|field| {
+            let name = &field.ident;
+            quote! { #name: typed_sql::types::Bind }
+        });
+
+        let binds = fields.named.iter().map(|field| {
+            let name = &field.ident;
+            quote! { #name: binder.bind() }
+        });
+
+        let values = fields.named.iter().map(|field| {
+            let name = &field.ident;
+            quote! { self.#name.write_primative(sql); }
+        });
+
+        let expanded = quote! {
+            struct #bindings {
+                #(#bind_fields),*
+            }
+
+            impl typed_sql::Binding for #ident {
+                type Bindings = #bindings;
+
+                fn bindings(binder: &mut typed_sql::types::bind::Binder) -> Self::Bindings {
+                    #bindings {
+                        #(#binds),*
+                    }
+                }
+
+                fn write_types(_sql: &mut String) {}
+
+                fn write_values(&self, sql: &mut String) {
+                    use typed_sql::types::Primative;
+                    #(#values)(sql.push(','))*;
+                }
+            }
+        };
+        TokenStream::from(expanded)
+    } else {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
