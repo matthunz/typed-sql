@@ -23,6 +23,8 @@ pub use select::{Join, Joined, Select};
 pub mod update;
 use update::{Update, UpdateSet};
 
+use self::insert::InsertSelect;
+
 pub trait Query: Sized {
     /// # Examples
     /// ```
@@ -111,6 +113,15 @@ pub trait Query: Sized {
         I::Item: Insertable,
     {
         InsertStatement::new(Values::new(values))
+    }
+
+    fn insert_select<S, I>(self, select: S) -> InsertStatement<Self::Table, InsertSelect<S, I>>
+    where
+        Self: TableQueryable,
+        S: Select,
+        I: Insertable,
+    {
+        InsertStatement::new(InsertSelect::new(select))
     }
 
     /// ```

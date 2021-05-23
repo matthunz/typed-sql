@@ -11,7 +11,7 @@ pub trait Connection {
     type Row: Row;
     type Error: From<<Self::Row as Row>::Error>;
 
-    async fn query(&mut self, sql: impl ToSql) -> Result<Self::Row, Self::Error>;
+    async fn query(&mut self, sql: impl ToSql + 'async_trait) -> Result<Self::Row, Self::Error>;
 }
 
 pub trait FromRow<R: Row>: Sized {

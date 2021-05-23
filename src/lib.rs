@@ -1,3 +1,5 @@
+//! # Complex queries
+//! See [Query] for available methods.
 //! ```
 //! use typed_sql::{Query, Table, ToSql};
 //!

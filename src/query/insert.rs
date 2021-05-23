@@ -1,6 +1,8 @@
 use crate::{Table, ToSql};
 use std::marker::PhantomData;
 
+use super::Select;
+
 pub trait Insertable {
     fn write_columns(sql: &mut String);
 
@@ -24,6 +26,30 @@ pub struct Values<I> {
 impl<I> Values<I> {
     pub(crate) fn new(iter: I) -> Self {
         Self { iter }
+    }
+}
+
+pub struct InsertSelect<S, I: ?Sized> {
+    select: S,
+    _insertable: PhantomData<I>
+}
+
+impl<S, I: ?Sized> InsertSelect<S, I> {
+    pub(crate) fn new(select: S) -> Self {
+        Self {
+            select,
+            _insertable: PhantomData
+        }
+    }
+}
+
+impl<S, I> Insertable for InsertSelect<S, I> where S: Select, I: Insertable + ?Sized {
+    fn write_columns(sql: &mut String) {
+        I::write_columns(sql);
+    }
+
+    fn write_values(&self, sql: &mut String) {
+        self.select.write_sql(sql);
     }
 }
 
