@@ -31,7 +31,7 @@
 pub mod conn;
 
 pub mod query;
-pub use query::{Join, Query};
+pub use query::{Insertable, Join, Query};
 
 mod sql;
 pub use sql::ToSql;

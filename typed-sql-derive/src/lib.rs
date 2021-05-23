@@ -158,6 +158,45 @@ pub fn join(input: TokenStream) -> TokenStream {
     }
 }
 
+#[proc_macro_derive(Insertable)]
+pub fn insertable(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    if let Data::Struct(DataStruct {
+        fields: Fields::Named(fields),
+        ..
+    }) = input.data
+    {
+        let ident = &input.ident;
+
+        let write_columns = fields.named.iter().map(|field| {
+            let name = &field.ident;
+            quote! { sql.push_str(stringify!(#name)); }
+        });
+
+        let write_values = fields.named.iter().map(|field| {
+            let name = &field.ident;
+            quote! { self.#name.write_primative(sql); }
+        });
+
+        let expanded = quote! {
+            impl typed_sql::Insertable for #ident {
+                fn write_columns(sql: &mut String) {
+                    #(#write_columns)(sql.push(',');)*
+                }
+
+                fn write_values(&self, sql: &mut String) {
+                    use typed_sql::types::Primative;
+                    #(#write_values)(sql.push(',');)*
+                }
+            }
+        };
+        TokenStream::from(expanded)
+    } else {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

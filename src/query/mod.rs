@@ -88,7 +88,7 @@ pub trait Query: Sized {
     }
 
     /// ```
-    /// use typed_sql::{Query, Table};
+    /// use typed_sql::{Insertable, Query, Table, ToSql};
     ///
     /// #[derive(Table)]
     /// struct User {
@@ -96,7 +96,14 @@ pub trait Query: Sized {
     ///     name: String
     /// }
     ///
-    /// struct UserInsert {}
+    /// #[derive(Insertable)]
+    /// struct UserInsert {
+    ///     name: &'static str
+    /// }
+    ///
+    /// let stmt = User::table().insert(UserInsert { name: "Matt" });
+    ///
+    /// assert_eq!(stmt.to_sql(), "INSERT INTO users(name) VALUES ('Matt');");
     /// ```
     fn insert<I>(self, value: I) -> InsertStatement<Self::Table, I>
     where
