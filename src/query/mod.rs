@@ -1,4 +1,6 @@
-use crate::{table::TableQueryable, Table};
+use crate::table::{Table, TableQueryable};
+use crate::types::bind::{Binder, Binding};
+use crate::ToSql;
 
 pub mod delete;
 use delete::Delete;
@@ -15,6 +17,9 @@ pub mod predicate;
 pub use predicate::Predicate;
 use predicate::{And, Or};
 
+pub mod prepare;
+use prepare::Prepare;
+
 pub mod select;
 use select::queryable::{Count, Queryable, WildCard};
 use select::{GroupBy, GroupOrder, Limit, Order, OrderBy, SelectStatement, Selectable};
@@ -28,6 +33,42 @@ use self::insert::InsertSelect;
 pub trait Query: Sized {
     /// # Examples
     /// ```
+    /// use typed_sql::{Binding, Query, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {
+    ///     id: i64,
+    ///     content: String
+    /// }
+    ///
+    /// #[derive(Binding)]
+    /// struct PostBinding {
+    ///     id: i64
+    /// }
+    ///
+    /// let stmt = PostBinding::prepare("postplan", |binds| {
+    ///     Post::table()
+    ///         .select()
+    ///         .filter(|post| post.id.eq(binds.id))
+    /// });
+    ///
+    /// assert_eq!(
+    ///     stmt.to_sql(),
+    ///     "PREPARE postplan AS SELECT * FROM posts WHERE posts.id=$1;"
+    /// );
+    /// ```
+    fn prepare<F, S>(name: &str, f: F) -> Prepare<Self, S>
+    where
+        Self: Binding,
+        F: FnOnce(Self::Bindings) -> S,
+        S: ToSql,
+    {
+        let bindings = Self::bindings(&mut Binder::default());
+        Prepare::new(name, f(bindings))
+    }
+
+    /// # Examples
+    /// ```
     /// use typed_sql::{Query, Table, ToSql};
     ///
     /// #[derive(Table)]
@@ -37,7 +78,10 @@ pub trait Query: Sized {
     ///
     /// let stmt = Post::table().select().filter(|p| p.content.eq("foo"));
     ///
-    /// assert_eq!(stmt.to_sql(), "SELECT * FROM posts WHERE posts.content = 'foo';");
+    /// assert_eq!(
+    ///     stmt.to_sql_unchecked(),
+    ///     "SELECT * FROM posts WHERE posts.content = 'foo';"
+    /// );
     /// ```
     fn select(self) -> SelectStatement<Self, WildCard>
     where
@@ -103,7 +147,10 @@ pub trait Query: Sized {
     ///
     /// let stmt = User::table().insert(UserInsert { name: "Matt" });
     ///
-    /// assert_eq!(stmt.to_sql(), "INSERT INTO users(name) VALUES ('Matt');");
+    /// assert_eq!(
+    ///     stmt.to_sql_unchecked(),
+    ///     "INSERT INTO users(name) VALUES ('Matt');"
+    /// );
     /// ```
     fn insert<I>(self, value: I) -> InsertStatement<Self::Table, I>
     where
@@ -145,7 +192,7 @@ pub trait Query: Sized {
     ///     .filter(|p| p.id.eq(1));
     ///
     /// assert_eq!(
-    ///     stmt.to_sql(),
+    ///     stmt.to_sql_unchecked(),
     ///     "UPDATE posts \
     ///     SET posts.id = 2,posts.name = 'foo' \
     ///     WHERE posts.id = 1;"
@@ -170,7 +217,7 @@ pub trait Query: Sized {
     ///
     /// let stmt = Post::table().delete().filter(|p| p.id.eq(2));
     ///
-    /// assert_eq!(stmt.to_sql(), "DELETE FROM posts WHERE posts.id = 2;");
+    /// assert_eq!(stmt.to_sql_unchecked(), "DELETE FROM posts WHERE posts.id = 2;");
     /// ```
     fn delete(self) -> Delete<Self::Table>
     where
@@ -197,7 +244,10 @@ pub trait Query: Sized {
     ///
     /// let stmt = User::table().select().filter(|user| user.id.neq(2).and(user.id.lt(5)));
     ///
-    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users WHERE users.id != 2 AND users.id < 5;");
+    /// assert_eq!(
+    ///     stmt.to_sql_unchecked(),
+    ///     "SELECT * FROM users WHERE users.id != 2 AND users.id < 5;"
+    /// );
     /// ```
     fn and<P>(self, predicate: P) -> And<Self, P>
     where
@@ -218,9 +268,14 @@ pub trait Query: Sized {
     ///     id: i64   
     /// }
     ///
-    /// let stmt = User::table().select().filter(|user| user.id.eq(1).or(user.id.eq(3)));
+    /// let stmt = User::table()
+    ///     .select()
+    ///     .filter(|user| user.id.eq(1).or(user.id.eq(3)));
     ///
-    /// assert_eq!(stmt.to_sql(), "SELECT * FROM users WHERE users.id = 1 OR users.id = 3;");
+    /// assert_eq!(
+    ///     stmt.to_sql_unchecked(),
+    ///     "SELECT * FROM users WHERE users.id = 1 OR users.id = 3;"
+    /// );
     fn or<P>(self, predicate: P) -> Or<Self, P>
     where
         Self: Predicate,

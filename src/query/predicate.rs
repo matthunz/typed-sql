@@ -1,6 +1,6 @@
-use crate::types::Primative;
 use crate::types::{Bind, Field};
 use crate::Table;
+use crate::{sql::Prepared, types::Primative};
 use std::{fmt::Write, marker::PhantomData};
 
 pub trait Predicate {
@@ -132,3 +132,5 @@ where
         sql.write_fmt(format_args!("${}", self.rhs.n)).unwrap();
     }
 }
+
+impl<T, A, U: Prepared, O> Prepared for Op<T, A, U, O> {}

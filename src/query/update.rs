@@ -48,7 +48,7 @@ where
     T: Table + ?Sized,
     S: UpdateSet,
 {
-    fn write_sql(&self, sql: &mut String) {
+    fn write_sql_unchecked(&self, sql: &mut String) {
         sql.push_str("UPDATE ");
         sql.push_str(T::NAME);
         sql.push_str(" SET ");

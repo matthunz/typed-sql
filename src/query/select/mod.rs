@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use super::filter::Filter;
 use super::Predicate;
-use crate::ToSql;
+use crate::{sql::Prepared, ToSql};
 
 pub mod group;
 pub use group::{GroupBy, GroupOrder};
@@ -56,15 +56,17 @@ impl<Q> Limit<Q> {
     }
 }
 
+impl<Q: Select> Select for Limit<Q> {
+    type Selectable = Q::Selectable;
+    type Queryable = Q::Queryable;
+}
+
 impl<Q: Select> ToSql for Limit<Q> {
-    fn write_sql(&self, sql: &mut String) {
-        self.queryable.write_sql(sql);
+    fn write_sql_unchecked(&self, sql: &mut String) {
+        self.queryable.write_sql_unchecked(sql);
         sql.write_fmt(format_args!(" LIMIT {}", self.limit))
             .unwrap();
     }
 }
 
-impl<Q: Select> Select for Limit<Q> {
-    type Selectable = Q::Selectable;
-    type Queryable = Q::Queryable;
-}
+impl<Q: Prepared> Prepared for Limit<Q> {}

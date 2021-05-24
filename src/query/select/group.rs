@@ -1,5 +1,8 @@
 use super::Select;
-use crate::types::field::{Field, Then};
+use crate::{
+    sql::Prepared,
+    types::field::{Field, Then},
+};
 use crate::{Table, ToSql};
 
 pub trait GroupOrder {
@@ -38,18 +41,6 @@ impl<Q, O> GroupBy<Q, O> {
     }
 }
 
-impl<S, O> ToSql for GroupBy<S, O>
-where
-    S: Select,
-    O: GroupOrder,
-{
-    fn write_sql(&self, sql: &mut String) {
-        self.stmt.write_sql(sql);
-        sql.push_str(" GROUP BY ");
-        self.order.write_columns(sql);
-    }
-}
-
 impl<S, O> Select for GroupBy<S, O>
 where
     S: Select,
@@ -58,3 +49,17 @@ where
     type Selectable = S::Selectable;
     type Queryable = S::Queryable;
 }
+
+impl<S, O> ToSql for GroupBy<S, O>
+where
+    S: Select,
+    O: GroupOrder,
+{
+    fn write_sql_unchecked(&self, sql: &mut String) {
+        self.stmt.write_sql_unchecked(sql);
+        sql.push_str(" GROUP BY ");
+        self.order.write_columns(sql);
+    }
+}
+
+impl<Q: Prepared, O> Prepared for GroupBy<Q, O> {}

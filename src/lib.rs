@@ -10,14 +10,15 @@
 //!     name: String
 //! }
 //!
-//! let stmt = User::table().select()
+//! let stmt = User::table()
+//!     .select()
 //!     .filter(|user| user.id.neq(6).and(user.id.gt(3)))
 //!     .group_by(|user| user.name)
 //!     .order_by(|user| user.name.then(user.id.ascending()))
 //!     .limit(5);
 //!
 //! assert_eq!(
-//!     stmt.to_sql(),
+//!     stmt.to_sql_unchecked(),
 //!     "SELECT * FROM users \
 //!     WHERE users.id != 6 AND users.id > 3 \
 //!     GROUP BY users.name \
@@ -43,10 +44,13 @@
 //!         .filter(|user| user.id.eq(binds.id))
 //! });
 //!
-//! assert_eq!(id_plan.to_sql(), "PREPARE idplan AS SELECT * FROM users WHERE users.id=$1;");
+//! assert_eq!(
+//!     id_plan.to_sql(),
+//!     "PREPARE idplan AS SELECT * FROM users WHERE users.id=$1;"
+//! );
 //!
 //! let stmt = id_plan.execute(User { id: 0 });
-//! assert_eq!(stmt.to_sql(), "EXECUTE id_plan(0)");
+//! assert_eq!(stmt.to_sql(), "EXECUTE idplan(0);");
 //! ```
 
 #![feature(associated_type_defaults)]
@@ -58,7 +62,7 @@ pub mod query;
 pub use query::{Insertable, Join, Query};
 
 mod sql;
-pub use sql::ToSql;
+pub use sql::{Prepared, ToSql};
 
 pub mod table;
 pub use table::Table;

@@ -15,7 +15,7 @@ impl<T: ?Sized> Delete<T> {
 }
 
 impl<T: Table + ?Sized> ToSql for Delete<T> {
-    fn write_sql(&self, sql: &mut String) {
+    fn write_sql_unchecked(&self, sql: &mut String) {
         sql.push_str("DELETE FROM ");
         sql.push_str(T::NAME);
     }

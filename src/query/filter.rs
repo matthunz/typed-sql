@@ -2,7 +2,7 @@ use super::delete::Delete;
 use super::select::{Select, Selectable};
 use super::update::Update;
 use super::Predicate;
-use crate::{Table, ToSql};
+use crate::{sql::Prepared, Table, ToSql};
 
 pub trait Filterable {
     type Fields: Default;
@@ -37,9 +37,11 @@ where
     S: ToSql,
     P: Predicate,
 {
-    fn write_sql(&self, sql: &mut String) {
-        self.stmt.write_sql(sql);
+    fn write_sql_unchecked(&self, sql: &mut String) {
+        self.stmt.write_sql_unchecked(sql);
         sql.push_str(" WHERE ");
         self.predicate.write_predicate(sql);
     }
 }
+
+impl<S, P: Prepared> Prepared for Filter<S, P> {}

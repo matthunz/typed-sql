@@ -1,5 +1,8 @@
 use super::Select;
-use crate::types::field::{Field, Then};
+use crate::{
+    sql::Prepared,
+    types::field::{Field, Then},
+};
 use crate::{Table, ToSql};
 use std::marker::PhantomData;
 
@@ -14,18 +17,6 @@ impl<Q, O> OrderBy<Q, O> {
     }
 }
 
-impl<Q, O> ToSql for OrderBy<Q, O>
-where
-    Q: Select,
-    O: Order,
-{
-    fn write_sql(&self, sql: &mut String) {
-        self.stmt.write_sql(sql);
-        sql.push_str(" ORDER BY ");
-        self.order.write_order(sql);
-    }
-}
-
 impl<S, O> Select for OrderBy<S, O>
 where
     S: Select,
@@ -34,6 +25,20 @@ where
     type Selectable = S::Selectable;
     type Queryable = S::Queryable;
 }
+
+impl<Q, O> ToSql for OrderBy<Q, O>
+where
+    Q: Select,
+    O: Order,
+{
+    fn write_sql_unchecked(&self, sql: &mut String) {
+        self.stmt.write_sql_unchecked(sql);
+        sql.push_str(" ORDER BY ");
+        self.order.write_order(sql);
+    }
+}
+
+impl<Q: Prepared, O> Prepared for OrderBy<Q, O> {}
 
 pub trait Direction {
     const DIRECTION: &'static str;

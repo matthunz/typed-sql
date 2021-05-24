@@ -53,7 +53,7 @@ where
     }
 
     fn write_values(&self, sql: &mut String) {
-        self.select.write_sql(sql);
+        self.select.write_sql_unchecked(sql);
     }
 }
 
@@ -88,7 +88,7 @@ where
     T: Table + ?Sized,
     I: Insertable,
 {
-    fn write_sql(&self, sql: &mut String) {
+    fn write_sql_unchecked(&self, sql: &mut String) {
         self.write_insert::<I>(sql);
 
         sql.push('(');
@@ -103,7 +103,7 @@ where
     I: IntoIterator + Clone,
     I::Item: Insertable,
 {
-    fn write_sql(&self, sql: &mut String) {
+    fn write_sql_unchecked(&self, sql: &mut String) {
         self.write_insert::<I::Item>(sql);
 
         let mut values = self.values.iter.clone().into_iter().peekable();
