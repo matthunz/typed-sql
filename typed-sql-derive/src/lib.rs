@@ -186,7 +186,7 @@ pub fn insertable(input: TokenStream) -> TokenStream {
                 }
 
                 fn write_values(&self, sql: &mut String) {
-                    use typed_sql::types::Primative;
+                    use typed_sql::types::Primitive;
                     #(#write_values)(sql.push(',');)*
                 }
             }
@@ -241,7 +241,7 @@ pub fn binding(input: TokenStream) -> TokenStream {
                 fn write_types(_sql: &mut String) {}
 
                 fn write_values(&self, sql: &mut String) {
-                    use typed_sql::types::Primative;
+                    use typed_sql::types::Primitive;
                     #(#values)(sql.push(','))*;
                 }
             }

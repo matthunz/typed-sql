@@ -31,20 +31,18 @@
 //! and therefore must be serialized with [`ToSql::to_sql_unchecked`].
 //!
 //! ```
-//! use typed_sql::{Query, Table, ToSql};
+//! use typed_sql::{Insertable, Query, Table, ToSql};
 //!
-//! #[derive(Table)]
+//! #[derive(Table, Insertable)]
 //! struct User {
 //!     name: String
 //! }
 //!
-//! let stmt = User::table()
-//!         .select()
-//!         .filter(|user| user.name.eq("foo"));
+//! let stmt = User::table().insert(User { name: String::from("untrusted") });
 //!
 //! assert_eq!(
 //!     stmt.to_sql_unchecked(),
-//!     "SELECT * FROM users WHERE users.name = 'foo';"
+//!     "INSERT INTO users(name) VALUES ('untrusted');"
 //! );
 //! ```
 //!

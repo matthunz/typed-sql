@@ -1,6 +1,5 @@
-use crate::{Table, ToSql};
+use crate::{CheckedSql, Table, ToSql};
 use std::marker::PhantomData;
-
 use super::Select;
 
 pub trait Insertable {
@@ -122,3 +121,5 @@ where
         }
     }
 }
+
+impl<T, I: CheckedSql> CheckedSql for InsertSelect<T, I> {}
