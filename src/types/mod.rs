@@ -6,11 +6,11 @@ pub use bind::{Bind, Binding};
 pub mod field;
 pub use field::Field;
 
-pub trait Primative {
+pub trait Primitive {
     fn write_primative(&self, sql: &mut String);
 }
 
-impl Primative for String {
+impl Primitive for String {
     fn write_primative(&self, sql: &mut String) {
         sql.push('\'');
         sql.push_str(&self);
@@ -18,7 +18,7 @@ impl Primative for String {
     }
 }
 
-impl Primative for &'_ str {
+impl Primitive for &'_ str {
     fn write_primative(&self, sql: &mut String) {
         sql.push('\'');
         sql.push_str(self);
@@ -26,7 +26,7 @@ impl Primative for &'_ str {
     }
 }
 
-impl Primative for i64 {
+impl Primitive for i64 {
     fn write_primative(&self, sql: &mut String) {
         sql.write_fmt(format_args!("{}", self)).unwrap();
     }

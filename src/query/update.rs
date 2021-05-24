@@ -1,6 +1,6 @@
 use super::predicate::{And, Eq, Op, Predicate};
-use crate::{CheckedSql, types::{Bind, Primative}};
-use crate::{Table, ToSql};
+use crate::types::{Bind, Primitive};
+use crate::{CheckedSql, Table, ToSql};
 use std::marker::PhantomData;
 
 pub trait UpdateSet {
@@ -19,7 +19,7 @@ where
 impl<T, A, U> UpdateSet for Op<T, A, U, Eq>
 where
     T: Table,
-    U: Primative,
+    U: Primitive,
 {
     fn write_set(&self, sql: &mut String) {
         self.write_predicate(sql);
@@ -65,6 +65,4 @@ where
     }
 }
 
-impl<T: ?Sized, S: CheckedSql> CheckedSql for Update<T, S> {
-    
-}
+impl<T: ?Sized, S: CheckedSql> CheckedSql for Update<T, S> {}

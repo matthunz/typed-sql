@@ -1,6 +1,20 @@
 pub trait CheckedSql {}
 
+impl CheckedSql for i8 {}
+
+impl CheckedSql for i16 {}
+
+impl CheckedSql for i32 {}
+
 impl CheckedSql for i64 {}
+
+impl CheckedSql for u8 {}
+
+impl CheckedSql for u16 {}
+
+impl CheckedSql for u32 {}
+
+impl CheckedSql for u64 {}
 
 pub trait ToSql {
     fn write_sql_unchecked(&self, sql: &mut String);

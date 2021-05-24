@@ -1,6 +1,6 @@
+use crate::types::Primitive;
 use crate::types::{Bind, Field};
-use crate::Table;
-use crate::{sql::CheckedSql, types::Primative};
+use crate::{CheckedSql, Table};
 use std::{fmt::Write, marker::PhantomData};
 
 pub trait Predicate {
@@ -24,9 +24,7 @@ where
     }
 }
 
-impl<H: CheckedSql, T: CheckedSql> CheckedSql for And<H, T> {
-
-}
+impl<H: CheckedSql, T: CheckedSql> CheckedSql for And<H, T> {}
 
 pub struct Or<H, T> {
     pub(crate) head: H,
@@ -45,9 +43,7 @@ where
     }
 }
 
-impl<H: CheckedSql, T: CheckedSql> CheckedSql for Or<H, T> {
-
-}
+impl<H: CheckedSql, T: CheckedSql> CheckedSql for Or<H, T> {}
 
 pub trait Operator {
     fn write_operator(sql: &mut String);
@@ -104,7 +100,7 @@ impl<T, A, U, O> Op<T, A, U, O> {
 impl<T, A, U, O> Predicate for Op<T, A, U, O>
 where
     T: Table,
-    U: Primative,
+    U: Primitive,
     O: Operator,
 {
     fn write_predicate(&self, sql: &mut String) {
