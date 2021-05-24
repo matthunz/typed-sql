@@ -252,10 +252,32 @@ pub fn binding(input: TokenStream) -> TokenStream {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+#[proc_macro_derive(Queryable)]
+pub fn queryable(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    if let Data::Struct(DataStruct {
+        fields: Fields::Named(fields),
+        ..
+    }) = input.data
+    {
+        let ident = &input.ident;
+        let columns = fields.named.iter().map(|field| {
+            let name = &field.ident;
+            quote! {
+                sql.push_str(stringify!(#name));
+            }
+        });
+
+        let expanded = quote! {
+            impl typed_sql::Queryable for #ident {
+                fn write_queryable(sql: &mut String) {
+                    #(#columns)(sql.push(','))*
+                }
+            }
+        };
+        TokenStream::from(expanded)
+    } else {
+        todo!()
     }
 }

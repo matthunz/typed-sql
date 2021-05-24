@@ -11,7 +11,7 @@ pub use filter::Filterable;
 
 pub mod insert;
 pub use insert::Insertable;
-use insert::{InsertStatement, Values};
+use insert::{InsertSelect, InsertStatement, Values};
 
 pub mod predicate;
 pub use predicate::Predicate;
@@ -21,14 +21,12 @@ pub mod prepare;
 use prepare::Prepare;
 
 pub mod select;
-use select::queryable::{Count, Queryable, WildCard};
+use select::queryable::{Count, WildCard, WriteQueryable};
 use select::{GroupBy, GroupOrder, Limit, Order, OrderBy, SelectStatement, Selectable};
-pub use select::{Join, Joined, Select};
+pub use select::{Join, Joined, Queryable, Select};
 
 pub mod update;
 use update::{Update, UpdateSet};
-
-use self::insert::InsertSelect;
 
 pub trait Query: Sized {
     /// # Examples
@@ -90,10 +88,32 @@ pub trait Query: Sized {
         self.query(WildCard)
     }
 
+    /// # Examples
+    /// ```
+    /// use typed_sql::{Query, Queryable, Table, ToSql};
+    ///
+    /// #[derive(Table)]
+    /// struct Post {
+    ///     id: i64,
+    ///     content: String
+    /// }
+    ///
+    /// #[derive(Queryable)]
+    /// struct PostQuery {
+    ///     content: String
+    /// }
+    ///
+    /// let stmt = Post::table().query(PostQuery::queryable());
+    ///
+    /// assert_eq!(
+    ///     stmt.to_sql_unchecked(),
+    ///     "SELECT content FROM posts;"
+    /// );
+    /// ```
     fn query<Q>(self, query: Q) -> SelectStatement<Self, Q>
     where
         Self: Selectable,
-        Q: Queryable,
+        Q: WriteQueryable,
     {
         SelectStatement::new(self, query)
     }
@@ -126,7 +146,7 @@ pub trait Query: Sized {
     where
         Self: Selectable,
         F: FnOnce(Self::Fields) -> T,
-        Count<T>: Queryable,
+        Count<T>: WriteQueryable,
     {
         self.query(Count::new(f(Default::default())))
     }

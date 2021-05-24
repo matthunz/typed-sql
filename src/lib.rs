@@ -1,5 +1,5 @@
 //! # Complex queries
-//! See [Query] for available methods.
+//! See [`Query`] for available methods.
 //!
 //! ```
 //! use typed_sql::{Query, Table, ToSql};
@@ -27,9 +27,10 @@
 //! );
 //! ```
 //! ## Injections
-//! Queries with user input parameters are vulnerable to SQL injections.
+//! Queries with user input parameters are vulnerable to SQL injections
+//! and therefore must be serialized with [`ToSql::to_sql_unchecked`].
 //!
-//! To avoid this use prepared statements with [Binding].
+//! To avoid this use prepared statements with [`Binding`].
 //! ```
 //! use typed_sql::{Binding, Query, Table, ToSql};
 //!
@@ -53,13 +54,12 @@
 //! assert_eq!(stmt.to_sql(), "EXECUTE idplan(0);");
 //! ```
 
-#![feature(associated_type_defaults)]
 #![feature(min_type_alias_impl_trait)]
 
 pub mod conn;
 
 pub mod query;
-pub use query::{Insertable, Join, Query};
+pub use query::{Insertable, Join, Query, Queryable};
 
 mod sql;
 pub use sql::{Prepared, ToSql};

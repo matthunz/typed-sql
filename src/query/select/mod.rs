@@ -14,20 +14,20 @@ pub mod order;
 pub use order::{Order, OrderBy};
 
 pub mod queryable;
-pub use queryable::{Queryable, WildCard};
+pub use queryable::{Queryable, WildCard, WriteQueryable};
 
 mod selectable;
 pub use selectable::{SelectStatement, Selectable};
 
 pub trait Select: ToSql {
     type Selectable: Selectable;
-    type Queryable: Queryable;
+    type Queryable: WriteQueryable;
 }
 
 impl<S, Q> Select for SelectStatement<S, Q>
 where
     S: Selectable,
-    Q: Queryable,
+    Q: WriteQueryable,
 {
     type Selectable = S;
     type Queryable = Q;
@@ -36,7 +36,7 @@ where
 impl<S, Q, P> Select for Filter<SelectStatement<S, Q>, P>
 where
     S: Selectable,
-    Q: Queryable,
+    Q: WriteQueryable,
     P: Predicate,
 {
     type Selectable = S;

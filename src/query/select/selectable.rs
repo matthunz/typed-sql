@@ -1,10 +1,7 @@
 use super::join::JoinSelect;
-use super::Queryable;
-use crate::ToSql;
-use crate::{
-    sql::Prepared,
-    table::{Table, TableQuery},
-};
+use super::WriteQueryable;
+use crate::table::{Table, TableQuery};
+use crate::{Prepared, ToSql};
 
 pub trait Selectable {
     type Table: Table + ?Sized;
@@ -44,7 +41,7 @@ impl<S: Selectable, Q> SelectStatement<S, Q> {
 impl<S, Q> ToSql for SelectStatement<S, Q>
 where
     S: Selectable,
-    Q: Queryable,
+    Q: WriteQueryable,
 {
     fn write_sql_unchecked(&self, sql: &mut String) {
         sql.push_str("SELECT ");
