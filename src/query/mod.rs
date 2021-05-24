@@ -52,7 +52,7 @@ pub trait Query: Sized {
     ///
     /// assert_eq!(
     ///     stmt.to_sql(),
-    ///     "PREPARE postplan AS SELECT * FROM posts WHERE posts.id=$1;"
+    ///     "PREPARE postplan AS SELECT * FROM posts WHERE posts.id = $1;"
     /// );
     /// ```
     fn prepare<F, S>(name: &str, f: F) -> Prepare<Self, S>

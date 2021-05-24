@@ -2,7 +2,7 @@ use super::delete::Delete;
 use super::select::{Select, Selectable};
 use super::update::Update;
 use super::Predicate;
-use crate::{sql::Prepared, Table, ToSql};
+use crate::{sql::CheckedSql, Table, ToSql};
 
 pub trait Filterable {
     type Fields: Default;
@@ -44,4 +44,4 @@ where
     }
 }
 
-impl<S, P: Prepared> Prepared for Filter<S, P> {}
+impl<S, P: CheckedSql> CheckedSql for Filter<S, P> {}

@@ -1,4 +1,4 @@
-use crate::{Binding, Prepared, ToSql};
+use crate::{Binding, CheckedSql, ToSql};
 use std::marker::PhantomData;
 
 pub struct Prepare<'a, B, S> {
@@ -38,7 +38,7 @@ impl<B: Binding, S: ToSql> ToSql for Prepare<'_, B, S> {
     }
 }
 
-impl<B, S: Prepared> Prepared for Prepare<'_, B, S> {}
+impl<B, S: CheckedSql> CheckedSql for Prepare<'_, B, S> {}
 
 impl<B, S: Copy> Clone for Prepare<'_, B, S> {
     fn clone(&self) -> Self {
@@ -64,4 +64,4 @@ impl<B: Binding> ToSql for Execute<'_, B> {
     }
 }
 
-impl<B> Prepared for Execute<'_, B> {}
+impl<B> CheckedSql for Execute<'_, B> {}

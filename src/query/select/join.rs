@@ -41,7 +41,7 @@ impl JoinKind for Inner {
 ///
 /// assert_eq!(
 ///     join.select().to_sql(),
-///     "SELECT * FROM users INNER JOIN posts ON users.id=posts.user_id;"
+///     "SELECT * FROM users INNER JOIN posts ON users.id = posts.user_id;"
 /// );
 /// ```
 pub trait Join<P> {

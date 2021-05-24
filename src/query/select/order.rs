@@ -1,6 +1,6 @@
 use super::Select;
 use crate::{
-    sql::Prepared,
+    sql::CheckedSql,
     types::field::{Field, Then},
 };
 use crate::{Table, ToSql};
@@ -38,7 +38,7 @@ where
     }
 }
 
-impl<Q: Prepared, O> Prepared for OrderBy<Q, O> {}
+impl<Q: CheckedSql, O> CheckedSql for OrderBy<Q, O> {}
 
 pub trait Direction {
     const DIRECTION: &'static str;

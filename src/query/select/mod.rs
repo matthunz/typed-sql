@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use super::filter::Filter;
 use super::Predicate;
-use crate::{sql::Prepared, ToSql};
+use crate::sql::{CheckedSql, ToSql};
 
 pub mod group;
 pub use group::{GroupBy, GroupOrder};
@@ -69,4 +69,4 @@ impl<Q: Select> ToSql for Limit<Q> {
     }
 }
 
-impl<Q: Prepared> Prepared for Limit<Q> {}
+impl<Q: CheckedSql> CheckedSql for Limit<Q> {}

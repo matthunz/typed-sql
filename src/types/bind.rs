@@ -1,11 +1,11 @@
-use crate::sql::Prepared;
+use crate::sql::CheckedSql;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Bind {
     pub n: u8,
 }
 
-impl Prepared for Bind {}
+impl CheckedSql for Bind {}
 
 #[derive(Debug)]
 pub struct Binder {

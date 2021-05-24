@@ -1,7 +1,7 @@
 use super::join::JoinSelect;
 use super::WriteQueryable;
 use crate::table::{Table, TableQuery};
-use crate::{Prepared, ToSql};
+use crate::{CheckedSql, ToSql};
 
 pub trait Selectable {
     type Table: Table + ?Sized;
@@ -52,4 +52,4 @@ where
     }
 }
 
-impl<S, Q> Prepared for SelectStatement<S, Q> {}
+impl<S, Q> CheckedSql for SelectStatement<S, Q> {}

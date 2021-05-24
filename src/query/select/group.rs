@@ -1,6 +1,6 @@
 use super::Select;
 use crate::{
-    sql::Prepared,
+    sql::CheckedSql,
     types::field::{Field, Then},
 };
 use crate::{Table, ToSql};
@@ -62,4 +62,4 @@ where
     }
 }
 
-impl<Q: Prepared, O> Prepared for GroupBy<Q, O> {}
+impl<Q: CheckedSql, O> CheckedSql for GroupBy<Q, O> {}

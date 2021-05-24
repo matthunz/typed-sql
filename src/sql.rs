@@ -1,11 +1,13 @@
-pub trait Prepared {}
+pub trait CheckedSql {}
+
+impl CheckedSql for i64 {}
 
 pub trait ToSql {
     fn write_sql_unchecked(&self, sql: &mut String);
 
     fn write_sql(&self, sql: &mut String)
     where
-        Self: Prepared,
+        Self: CheckedSql,
     {
         self.write_sql_unchecked(sql);
     }
@@ -19,7 +21,7 @@ pub trait ToSql {
 
     fn to_sql(&self) -> String
     where
-        Self: Prepared,
+        Self: CheckedSql,
     {
         self.to_sql_unchecked()
     }
