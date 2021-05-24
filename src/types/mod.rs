@@ -31,3 +31,13 @@ impl Primitive for i64 {
         sql.write_fmt(format_args!("{}", self)).unwrap();
     }
 }
+
+impl<P: Primitive> Primitive for Option<P> {
+    fn write_primative(&self, sql: &mut String) {
+        if let Some(primative) = self {
+            primative.write_primative(sql);
+        } else {
+            sql.push_str("NULL");
+        }
+    }
+}
