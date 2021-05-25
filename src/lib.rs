@@ -70,7 +70,10 @@
 
 #![feature(min_type_alias_impl_trait)]
 
-pub mod conn;
+#[cfg(feature = "sqlx")]
+pub mod fetch;
+#[cfg(feature = "sqlx")]
+pub use fetch::Fetch;
 
 pub mod query;
 pub use query::{Insertable, Join, Query, Queryable};

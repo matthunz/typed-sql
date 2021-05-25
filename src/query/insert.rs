@@ -1,6 +1,6 @@
+use super::Select;
 use crate::{CheckedSql, Table, ToSql};
 use std::marker::PhantomData;
-use super::Select;
 
 pub trait Insertable {
     fn write_columns(sql: &mut String);

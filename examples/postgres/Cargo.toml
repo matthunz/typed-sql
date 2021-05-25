@@ -1,0 +1,13 @@
+[package]
+name = "typed-sql-postgres-example"
+version = "0.1.0"
+edition = "2018"
+workspace = "../../"
+
+[dependencies]
+typed-sql = { path = "../../" }
+tokio = { version = "1.6.0", features = ["macros"] }
+
+[dependencies.sqlx]
+version = "0.5.5"
+features = ["runtime-tokio-native-tls", "postgres"]

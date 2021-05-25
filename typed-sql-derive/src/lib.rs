@@ -182,12 +182,12 @@ pub fn insertable(input: TokenStream) -> TokenStream {
         let expanded = quote! {
             impl typed_sql::Insertable for #ident {
                 fn write_columns(sql: &mut String) {
-                    #(#write_columns)(sql.push(',');)*
+                    #(#write_columns){sql.push(',');}*
                 }
 
                 fn write_values(&self, sql: &mut String) {
                     use typed_sql::types::Primitive;
-                    #(#write_values)(sql.push(',');)*
+                    #(#write_values){sql.push(',');}*
                 }
             }
         };
@@ -242,7 +242,7 @@ pub fn binding(input: TokenStream) -> TokenStream {
 
                 fn write_values(&self, sql: &mut String) {
                     use typed_sql::types::Primitive;
-                    #(#values)(sql.push(','))*;
+                    #(#values){sql.push(',');}*;
                 }
             }
         };

@@ -7,10 +7,23 @@ description = "A strongly typed sql serialization/deserialization framework"
 repository = "https://github.com/matthunz/typed-sql"
 
 [workspace]
+members = [
+    ".",
+    "typed-sql-derive",
+    "examples/postgres"
+]
 
 [lib]
 name = "typed_sql"
 
+[features]
+default = ["sqlx"]
+
 [dependencies]
 async-trait = "0.1.50"
-typed-sql-derive = "0.1.2"
+typed-sql-derive = { path = "typed-sql-derive" }
+
+[dependencies.sqlx]
+version = "0.5.5"
+optional = true
+features = ["runtime-tokio-native-tls"]
