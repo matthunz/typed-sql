@@ -108,7 +108,7 @@ where
         sql.push(' ');
         O::write_operator(sql);
         sql.push(' ');
-        self.rhs.write_primative(sql);
+        self.rhs.write_primitive(sql);
     }
 }
 

@@ -176,7 +176,7 @@ pub fn insertable(input: TokenStream) -> TokenStream {
 
         let write_values = fields.named.iter().map(|field| {
             let name = &field.ident;
-            quote! { self.#name.write_primative(sql); }
+            quote! { self.#name.write_primitive(sql); }
         });
 
         let expanded = quote! {
@@ -221,7 +221,7 @@ pub fn binding(input: TokenStream) -> TokenStream {
 
         let values = fields.named.iter().map(|field| {
             let name = &field.ident;
-            quote! { self.#name.write_primative(sql); }
+            quote! { self.#name.write_primitive(sql); }
         });
 
         let expanded = quote! {

@@ -7,11 +7,11 @@ pub mod field;
 pub use field::Field;
 
 pub trait Primitive {
-    fn write_primative(&self, sql: &mut String);
+    fn write_primitive(&self, sql: &mut String);
 }
 
 impl Primitive for String {
-    fn write_primative(&self, sql: &mut String) {
+    fn write_primitive(&self, sql: &mut String) {
         sql.push('\'');
         sql.push_str(&self);
         sql.push('\'');
@@ -19,7 +19,7 @@ impl Primitive for String {
 }
 
 impl Primitive for &'_ str {
-    fn write_primative(&self, sql: &mut String) {
+    fn write_primitive(&self, sql: &mut String) {
         sql.push('\'');
         sql.push_str(self);
         sql.push('\'');
@@ -27,15 +27,15 @@ impl Primitive for &'_ str {
 }
 
 impl Primitive for i64 {
-    fn write_primative(&self, sql: &mut String) {
+    fn write_primitive(&self, sql: &mut String) {
         sql.write_fmt(format_args!("{}", self)).unwrap();
     }
 }
 
 impl<P: Primitive> Primitive for Option<P> {
-    fn write_primative(&self, sql: &mut String) {
+    fn write_primitive(&self, sql: &mut String) {
         if let Some(primative) = self {
-            primative.write_primative(sql);
+            primative.write_primitive(sql);
         } else {
             sql.push_str("NULL");
         }
