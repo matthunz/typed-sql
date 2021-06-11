@@ -68,8 +68,6 @@
 //! assert_eq!(stmt.to_sql(), "EXECUTE idplan('foo');");
 //! ```
 
-#![feature(min_type_alias_impl_trait)]
-
 #[cfg(feature = "sqlx")]
 pub mod fetch;
 #[cfg(feature = "sqlx")]
