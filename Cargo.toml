@@ -10,7 +10,8 @@ repository = "https://github.com/matthunz/typed-sql"
 members = [
     ".",
     "typed-sql-derive",
-    "examples/postgres"
+    "examples/postgres",
+    "examples/mysql"
 ]
 
 [lib]
