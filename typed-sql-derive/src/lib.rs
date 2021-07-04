@@ -36,13 +36,12 @@ pub fn table(input: TokenStream) -> TokenStream {
         });
 
         let table_name = {
-            let mut s = ident.to_string().to_lowercase();
-            s.push('s');
+            let s = ident.to_string().to_lowercase();
             Ident::new(&s, Span::call_site())
         };
 
         let expanded = quote! {
-            struct #fields_ident {
+            pub struct #fields_ident {
               #(#struct_fields)*
             }
 
