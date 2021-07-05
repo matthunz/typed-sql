@@ -2,11 +2,16 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, Data, DataStruct, DeriveInput, Fields, Ident};
+use syn::{
+    parse_macro_input, Attribute, Data, DataStruct, DeriveInput, Fields, Ident, Lit, Meta,
+    MetaNameValue,
+};
 
-#[proc_macro_derive(Table)]
+#[proc_macro_derive(Table, attributes(typed))]
 pub fn table(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
+
+    let table_name = parse_table_attributes(&input.attrs);
 
     if let Data::Struct(DataStruct {
         fields: Fields::Named(fields),
@@ -36,7 +41,11 @@ pub fn table(input: TokenStream) -> TokenStream {
         });
 
         let table_name = {
-            let s = ident.to_string().to_lowercase();
+            let s = if table_name.is_some() {
+                table_name.unwrap()
+            } else {
+                ident.to_string().to_lowercase()
+            };
             Ident::new(&s, Span::call_site())
         };
 
@@ -279,4 +288,35 @@ pub fn queryable(input: TokenStream) -> TokenStream {
     } else {
         todo!()
     }
+}
+
+fn parse_table_attributes(input: &[Attribute]) -> Option<String> {
+    let mut table_name = None;
+    for attr in input {
+        match attr.parse_meta().ok() {
+            None => return None,
+            Some(meta) => match meta {
+                Meta::List(list) if list.path.is_ident("typed") => {
+                    for value in list.nested.iter() {
+                        match value {
+                            syn::NestedMeta::Meta(meta) => match meta {
+                                Meta::NameValue(MetaNameValue {
+                                    path,
+                                    lit: Lit::Str(val),
+                                    ..
+                                }) if path.is_ident("table_name") => {
+                                    table_name = Some(val.value().to_uppercase());
+                                }
+                                _ => {}
+                            },
+                            _ => {}
+                        }
+                    }
+                }
+                _ => {}
+            },
+        }
+    }
+
+    table_name
 }
