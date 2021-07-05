@@ -6,6 +6,8 @@ pub use bind::{Bind, Binding};
 pub mod field;
 pub use field::Field;
 
+#[cfg(feature = "chrono")]
+mod chrono;
 pub trait Primitive {
     fn write_primative(&self, sql: &mut String);
 }
@@ -39,5 +41,11 @@ impl<P: Primitive> Primitive for Option<P> {
         } else {
             sql.push_str("NULL");
         }
+    }
+}
+
+impl Primitive for bool {
+    fn write_primative(&self, sql: &mut String) {
+        sql.write_fmt(format_args!("{}", self)).unwrap();
     }
 }

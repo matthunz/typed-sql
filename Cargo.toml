@@ -17,13 +17,31 @@ members = [
 name = "typed_sql"
 
 [features]
-default = ["sqlx"]
+
+default = ["all-types", "sqlx"]
+
+# type
+all-types = [ "chrono", "time", "bigdecimal", "decimal", "ipnetwork", "json", "uuid", "bit-vec" ]
+bigdecimal = [ "bigdecimal_", "num-bigint" ]
+decimal = [ "rust_decimal", "num-bigint" ]
+json = [ "serde", "serde_json" ]
+
 
 [dependencies]
 async-trait = "0.1.50"
 typed-sql-derive = { path = "typed-sql-derive" }
 
-[dependencies.sqlx]
-version = "0.5.5"
-optional = true
-features = ["runtime-tokio-native-tls"]
+bigdecimal_ = { version = "0.2.0", optional = true, package = "bigdecimal" }
+rust_decimal = { version = "1.7.0", optional = true }
+bit-vec = { version = "0.6.2", optional = true }
+chrono = { version = "0.4.11", default-features = false, features = [ "clock" ], optional = true }
+ipnetwork = { version = "0.18.0", default-features = false, optional = true }
+num-bigint = { version = "0.4.0", default-features = false, optional = true, features = [ "std" ] }
+serde = { version = "1.0.106", features = [ "derive", "rc" ], optional = true }
+serde_json = { version = "1.0.51", features = [ "raw_value" ], optional = true }
+time = { version = "0.2.16", optional = true }
+uuid = { version = "0.8.1", default-features = false, optional = true, features = [ "std" ] }
+
+sqlx = { version = "0.5.5", optional = true }
+
+
