@@ -6,6 +6,30 @@ pub use bind::{Bind, Binding};
 pub mod field;
 pub use field::Field;
 
+#[cfg(feature = "chrono")]
+mod chrono;
+
+#[cfg(feature = "bigdecimal")]
+mod bigdecimal;
+
+#[cfg(feature = "json")]
+mod json;
+
+#[cfg(feature = "time")]
+mod time;
+
+#[cfg(feature = "decimal")]
+mod decimal;
+
+#[cfg(feature = "ipnetwork")]
+mod ipnetwork;
+
+#[cfg(feature = "uuid")]
+mod uuid;
+
+#[cfg(feature = "bitvec")]
+mod bitvec;
+
 pub trait Primitive {
     fn write_primative(&self, sql: &mut String);
 }
@@ -39,5 +63,11 @@ impl<P: Primitive> Primitive for Option<P> {
         } else {
             sql.push_str("NULL");
         }
+    }
+}
+
+impl Primitive for bool {
+    fn write_primative(&self, sql: &mut String) {
+        sql.write_fmt(format_args!("{}", self)).unwrap();
     }
 }
