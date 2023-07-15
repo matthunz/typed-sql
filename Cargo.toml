@@ -1,6 +1,6 @@
 [package]
 name = "typed-sql"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2018"
 license = "MIT"
 description = "A strongly typed sql serialization/deserialization framework"
@@ -22,7 +22,8 @@ default = ["sqlx"]
 
 [dependencies]
 async-trait = "0.1.50"
-typed-sql-derive = { path = "typed-sql-derive" }
+# typed-sql-derive = { path = "typed-sql-derive" }
+typed-sql-derive = "0.1.2"
 
 [dependencies.sqlx]
 version = "0.5.5"
